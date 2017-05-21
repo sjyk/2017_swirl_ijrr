@@ -1,13 +1,23 @@
 \section{Introduction}
-One of the goals of learning from demonstrations (LfD) is to learn policies that generalize beyond the provided examples and are robust to perturbations in initial conditions, the environment, and sensing noise~\cite{argall2009survey}.
-Inverse Reinforcement Learning (IRL) is a popular framework, where the objective is to infer an unknown reward function from a set of demonstrations~\cite{DBLP:conf/nips/KolterAN07, coates2008learning, abbeel2004apprenticeship}.
-Once a reward is learned, given novel instances of a task, a policy can be computed by optimizing for this reward function using an policy search approach like Reinforcement Learning (RL)~\cite{ng2000algorithms, abbeel2004apprenticeship}.
+Learning from Demonstrations (LfD) is an effective approach to derive a robotic controller from observations of an expert supervisor~\cite{argall2009survey}.
+One of the primary challenges in LfD is generalization, where the learned policy must extrapolate from the observed demonstrations to new instances of the same task.
+Generalization can be difficult with a purely observational approach (i.e., no physical rollouts) due to differences between the demonstration and execution dynamics~\cite{abbeel2004apprenticeship}, modeling errors~\cite{ross2011reduction}, or simply because the demonstrations are noisy or inconsistent~\cite{krishnan2015tsc}.
+Prior work on \emph{apprenticeship learning}~\cite{DBLP:conf/nips/KolterAN07, coates2008learning, abbeel2004apprenticeship} argues for a two-phase approach that first applies Inverse Reinforcement Learning (IRL) to infer the supervisor's implicit reward function, and then optimizes for this reward function using an policy search approach like Reinforcement Learning (RL)~\cite{ng2000algorithms, abbeel2004apprenticeship}.
 
-In IRL, a task is modeled as an MDP with a single unknown function that maps states and actions to scalar values. 
-This model is limited in the way that it can represent \emph{sequential tasks}, tasks where a robot must reach a sequence of intermediate state-space goals in a particular order.
-In such tasks, the inferred reward may be \emph{delayed}
-and reflect a quantity observed after all of the goals are reached, and thus, making it very difficult to optimize directly. 
-Furthermore, there may not exist a single stationary policy for a given state-space that achieves all of the goals in sequence, e.g., a figure-8 trajectory in the x,y plane.
+
+Apprenticeship learning faces the same challenges with long time horizons as \emph{ab initio} RL.
+Learned reward functions can be delayed, where the consequences of an action are only observed long after it is taken, leading to challenges in assigning credit.
+This is particularly an issue in domains such as assembly or robotic surgery where a robot must reach a sequence of precise state-space goals in a particular order for the task to be successful.
+The motivation of this paper is to explore techniques to scale such algorithms to longer time horizons.
+The key insight is to divide the task into segments with local reward functions that ``build up'' to the final goal.
+
+We propose \hirlfull (\hirl), which is a three phase algorithm, that c: (1) unsupervised trajectory segmentation, (2) local inverse reinforcement learning, and (3) policy learning.
+For each one of these three phases, we characterize 
+
+
+
+
+
 
 To address this problem, one approach is to divide the task into segments with local reward functions that ``build up'' to the final goal.
 In existing work on multi-step IRL, this sequential structure is defined manually~\cite{DBLP:conf/nips/KolterAN07}.

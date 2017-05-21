@@ -1,9 +1,11 @@
- \documentclass{llncs}
+\documentclass[Afour,sageh,times]{sagej}
  %DRAFT MODE preserves formatting otherwise; %comment out
 % \usepackage[draft]{graphics}
 
 \let\labelindent\relax
 \input{preamble}
+
+
 
 \newenvironment{phase}[1][htb]
   {\renewcommand{\algorithmcfname}{Algorithm}% Update algorithm name
@@ -44,9 +46,13 @@ Brijen Thananjeyan,\\
 Lauren Miller,
 Florian T. Pokorny$^{*}$,
 Ken Goldberg%, 
-% \thanks{EECS \& IEOR, University of California, Berkeley CA USA; \texttt{\{sanjaykrishnan, animesh.garg, rliaw, bthananjeyan, ftpokorny, laurenm, goldberg\}@berkeley.edu}}%
 }
-\institute{The AUTOLAB at UC Berkeley (automation.berkeley.edu)\\$^{*}$CAS/CVAP, KTH Royal Institute of Technology, Stockholm, Sweden}
+
+\affiliation{\affilnum{1}AUTOLAB UC Berkeley\\
+\affilnum{2}KTH Sweden}
+
+\corrauth{Sanjay Krishnan}
+
 
 %\IEEEoverridecommandlockouts %to enable thanks to appear
 
@@ -69,7 +75,6 @@ Ken Goldberg%,
 
 % ----------------------------------------------------------
 \begin{document}
-\maketitle
 
 \begin{abstract}
 Inverse Reinforcement Learning (IRL) allows a robot to generalize from demonstrations to previously unseen scenarios by learning the demonstrator's reward function.
@@ -81,6 +86,10 @@ We compare \hirl (demonstrations to segments to rewards) with Supervised Policy 
 We find that \hirl converges to a policy with similar success rates (60\%) in 3x fewer time-steps than MaxEnt-IRL, and requires 5x fewer demonstrations than SPL.
 In physical experiments using the da Vinci surgical robot, we evaluate the extent to which \hirl generalizes from linear cutting demonstrations to cutting sequences of curved paths.
 \end{abstract} 
+
+\maketitle
+
+
 
 \input{1-wafr16-intro.tex}
 \input{2-wafr16-relatedwork.tex}
@@ -105,7 +114,7 @@ affiliation with the AMP Lab, BAIR, and the CITRIS "People and Robots" (CPAR) In
 
 %\href{http://j.mp/v-tsc}{j.mp/v-tsc}
 
-\bibliographystyle{splncs}
+\bibliographystyle{SageV}
 \bibliography{deepP2P}
 
 %\appendix

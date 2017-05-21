@@ -3,13 +3,13 @@
 
 %floats and figures
 \usepackage{graphics} %imported in the main document.
-\usepackage[pdftex]{graphicx}
+%\usepackage[pdftex]{graphicx}
 % \usepackage[font={small}]{caption}
 % \usepackage{subcaption}
 %\usepackage[center]{subfigure} %DONT USE BOTH SUBCAPTION AND SUBFIGURE
 %\DeclareGraphicsExtensions{.pdf,.png,.jpg}
 %\usepackage{overpic}
-\usepackage[rightcaption]{sidecap}
+%\usepackage[rightcaption]{sidecap}
 %\usepackage{pbox}
 
 %Math Stuff
@@ -48,15 +48,10 @@
 \usepackage{makeidx}
 \usepackage{enumitem}
 \usepackage[yyyymmdd,hhmmss]{datetime}
-\usepackage[english]{babel}
 
 %Bibliography and cross-ref
-\makeatletter
-\let\NAT@parse\undefined
-\makeatother
-\usepackage[numbers]{natbib}
-\renewcommand{\bibfont}{\footnotesize}
-% \usepackage{cite} %DONT USE NATBIB AND CITE TOGETHER
+
+%\usepackage{citex} %DONT USE NATBIB AND CITE TOGETHER
 
 %hyperlinking
 \usepackage{url}
@@ -65,14 +60,8 @@
 \makeatother
 \usepackage{color}
 \usepackage[usenames,dvipsnames,table,xcdraw]{xcolor}
-\usepackage[pdfborder={0 0 0.5}]{hyperref}
-\hypersetup{
-    colorlinks=true,
-    linkcolor=blue,
-    citecolor=black,
-    filecolor=cyan,
-    urlcolor=blue
-}
+\usepackage[colorlinks,bookmarksopen,bookmarksnumbered,citecolor=red,urlcolor=red]{hyperref}
+
 \usepackage[T1]{fontenc}
 \usepackage{csvsimple}
 
