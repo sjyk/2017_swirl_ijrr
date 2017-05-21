@@ -1,0 +1,20 @@
+%\documentclass[0-main.tex]{subfiles}
+%\begin{document}
+\section{Related Work}
+The seminal work of Abbeel and Ng~\cite{abbeel2004apprenticeship} explored learning from demonstrations using Inverse Reinforcement Learning.
+In~\cite{abbeel2004apprenticeship}, the authors used an IRL algorithm to infer the demonstrator's reward function and then an RL algorithm to optimize that reward.
+Our work re-visits this two-phase algorithm in the context of sequential tasks.
+It is well-established that RL problems often converge slowly in complex tasks when rewards are sparse and not ``shaped'' appropriately~\cite{DBLP:conf/icml/NgHR99, DBLP:conf/aaai/JudahFTG14}.
+These issues are exacerbated in sequential tasks where a sequence of goals must be reached.
+Related to this problem, Kolter et al. studied  \emph{Hierarchical Apprenticeship Learning} to learn bipedal locomotion~\cite{DBLP:conf/nips/KolterAN07}, where the algorithm is provided with a hierarchy sub-tasks.
+These sub-tasks are not learned from data and assumed as given, but the algorithm infers a reward function from demonstrations.
+\hirl applies to a restricted class of tasks defined by a sequence of reward functions and state-space goals.
+
+There are have been some proposals in robotics to learn motion primitives from data. The approaches assume that reward functions are given (or the problem can be solved with planning-based methods).
+Motion primitives are example trajectories (or sub-trajectories) that bias search in planning towards paths constructed with these primitives~\cite{ijspreet2002learning,pastor2009learning,manschitz2015learning}.
+Much of the initial work in motion primitives considered manually identified segments, but recently, Niekum et al. \cite{niekum2012learning} proposed learning the set of primitives from demonstrations using the Beta-Process Autoregressive Hidden Markov Model (BP-AR-HMM).
+Calinon et al.~\cite{calinon2014skills} proposed the task-parametrized movement model with GMMs for action segmentation.
+Both Niekum and Calinon consider the motion planning setting in which analytical planning methods are used to solve a task and not RL.
+Konidaris et al. studied the primitives in the RL setting~\cite{konidaris2011robot}. 
+However, this approach assumed that the reward function was given and not learned from demonstrations as in \hirl.
+Another relevant result is from Ranchod et al.~\cite{ranchod2015nonparametric}, who use an IRL model to define the primitives, in contrast to the problem of learning a policy after IRL.

@@ -1,0 +1,61 @@
+\section{Problem Statement and Model}
+\seclabel{back}
+
+\subsection{Notation}
+Consider a finite-horizon Markov Decision Process (MDP): \[\mathcal{M} = \langle S,A,P(\cdot,\cdot),\mathbf{R},T \rangle,\] where $S$ is the set of states (continuous or discrete), $A$ is the set of actions (finite and discrete), $P: S \times A \mapsto Pr(S)$ is the dynamics model that maps states and actions to a probability density over subsequent states, $T$ is the time-horizon, and $\mathbf{R}$ is a reward function that maps trajectories of length $T$ to scalar values.
+
+Sequential tasks are tasks composed of sequences of sub-tasks. There is a sequence $\mathbf{R}_{seq}=[R_1,...,R_k]$, where each $R_i: S \times A \mapsto \mathbb{R}$. Associated with each $R_i$ is a transition region $\rho_i \subseteq S$. 
+Each trajectory accumulates a reward $R_i$ until it reaches the transition $\rho_i$, then the robot switches to the next reward and transition pair.
+This process continues until $\rho_k$ is reached.
+A robot is deemed \emph{successful} when all of the $\rho_i \in G$ are reached in sequence.
+Further, a robot is \emph{optimal} when it maximizes the expected cumulative reward and is successful.
+Given observations of an optimally acting robot through a set of demonstration trajectories $D = \{d_1,...,d_k\}$, can we infer $\mathbf{R}_{seq}$ and $G$?
+
+\vspace{0.5em}\noindent\textbf{Assumptions: } We make the following assumptions: (1) the changes in reward between transitions is non trivial (see next remark), (2) every demonstration is generated from $k$ distinct stationary, locally optimal policies (maximized w.r.t  $R_i$ on the infinite horizon), (3) every demonstration visits each $\rho_i$ in the same sequence, and (4) each $R_i$ is a quadratic of the form.
+\vspace{0.5em}
+
+\noindent \textbf{Remarks: } The key challenge in this problem is determining when a transition occurs--identifying the points in time in each trajectory at which the robot reaches a $\rho_i$ and transitions the reward function.
+The natural first question is whether this is identifiable, that is, whether it is even theoretically possible to determine whether a transition $\rho_i \rightarrow \rho_{i+1}$ has occurred after obtaining an infinite number of observations. Trivially, this is not guaranteed when $R_{i+1} = R_{i}$, where it would be impossible to identify a transition purely from the robot's behavior (i.e., no change in reward, implies no change in behavior). Perhaps surprisingly, this is still not guaranteed even if $R_{i+1} \ne R_{i}$ due to policy invariance classes~\cite{DBLP:conf/icml/NgHR99}. Consider a reward function $R_{i+1} = 2R_{i}$, which functionally induce the same optimal behavior. Therefore, we consider a setting where all of the rewards in $\mathbf{R}_{seq}$ are distinct and are not equivalent w.r.t optimal policies.
+This formalism is a special case of the Hierarchical Reinforcement Learning~\cite{dietterich2000hierarchical}, where each of the local rewards is a sub-goal and arrival at a $\rho$ is a termination condition. 
+
+%The next challenge in the sequential task model is implicit partial observation. For sequential tasks, even if the each of the sub-tasks are fully observed the global problem might be partially observed. This is because the constraint that the robot must reach each of the $\rho_i$ in a particular sequence requires knowledge of the past (i.e., the set of previously reached transitions). So any inference procedure for $G$ and $R_{seq}$ must ensure that the event the robot has reached a given $\rho_i$ is a testable condition that only depends on prior observations. This problem is illustrated in Figure \ref{exp:gweasy1} in the experiments.
+
+\subsection{Target Tracking Controllers}
+As motivation for where such assumptions arise, consider the following system:
+\[
+x_{t+1} = Ax_{t} + Bu_{t} + w_{t}~~~~~w_{t} \sim N(0, \Sigma)~~~i.i.d 
+\]
+For quadratic rewards in the infinite horizon, the optimal policy is a linear state feedback controller $u_{t} = - C x_{t}$
+Given this model, suppose we wanted to control the robot to a final state $\mu_i$ with a linear state-feedback controller $C_i$, the dynamical system that would follow is:
+\[
+\hat{x}_{t+1} = (A - B C_i) \hat{x}_t + w_t,
+\]
+where $\hat{x}_{t}  = x_t - \mu_i$. 
+If this system is stable, it will converge to $x_{t} = \mu_i$ as $t \rightarrow \infty$.
+Now, suppose that the system has the following switching behavior: when $\| x_{t} - \mu_i \| \le \epsilon$, change the target state $\mu_i$ to $\mu_{i+1}$.
+The resulting closed loop dynamics are:
+\[
+A_i = (A - B C_i)
+\]
+\[
+x_{t+1} = A_{i}\mathbf{x}_t + w_{t} \text{ : } A_i \in \{A_1,...,A_k\}.
+\]
+The equation above defines an SLDS.
+This model maps back to the general case where the sequence $[\mu_1,...,\mu_k]$ and their tolerances $[\epsilon_1,...,\epsilon_k]$ define the regions $[\rho_1,...,\rho_k]$.
+Each $\rho_i$ corresponds to regions where transitions occur $A_i \ne A_j$.
+Intuitively, a change in the reward function results in a change of policy ($C_i$) for a locally optimal agent.
+
+This form of a target-tracking linear system inspires our approach, where a robot applies a closed-loop controller to reach a target within a tolerance.
+While the ultimate target is fixed, we still need to understand what cost function the robot is minimizing, i.e., are there directions in which the robot minimizes distance to the target faster? 
+To learn these, we can leverage human demonstrations.
+A demonstration $d$ is a trajectory of state and action tuples $[(s_0,a_0),...,(s_T,a_T)]$. 
+Let $D$ be a set of demonstrations $\{d_1,...,d_N\}$, and our objective is to infer a sequence of reward functions (or cost functions) corresponding to each of the task segments.
+
+
+
+
+
+
+
+
+
