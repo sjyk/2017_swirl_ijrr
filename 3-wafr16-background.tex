@@ -10,7 +10,7 @@ Each trajectory accumulates a reward $R_i$ until it reaches the transition $\rho
 This process continues until $\rho_k$ is reached.
 A robot is deemed \emph{successful} when all of the $\rho_i \in G$ are reached in sequence.
 
-\noindent \textbf{Informal Problement Statement: } Given observations of a successful robot through a set of demonstration trajectories $D = \{d_1,...,d_k\}$, can we infer $\mathbf{R}_{seq}$ and $G$?
+\vspace{0.25em} \noindent \textbf{Informal Problem Statement: } Given observations of a successful robot through a set of demonstration trajectories $D = \{d_1,...,d_k\}$, can we infer $\mathbf{R}_{seq}$ and $G$?
 
 \subsection{Modeling Assumptions}
 To make this problem statement more formal and computationally tractable, we have to make a few modeling assumptions.
@@ -41,7 +41,26 @@ This is a known necessary and sufficient result, see Theorem 1 in~\cite{DBLP:con
 
 \vspace{0.5em}\noindent\textbf{Assumption 4. Ellipsoidal Approximation: } Finally, we assume that the termination regions in $G$ can be approximated by a set of disjoint ellipsoids over the perceptual features.
 
+\subsection{Algorithm Description}
+Let $D$ be a set of demonstration trajectories $\{d_1,...,d_N\}$ of a task with a delayed reward.
+\hirl can be described in terms of three sub-algorithms:
 
+\vspace{2pt}
+\noindent\textbf{Inputs:} Demonstrations $D$
+\begin{enumerate}[
+    topsep=0pt,
+    noitemsep,
+    % partopsep=1ex,
+    % parsep=1ex,
+    leftmargin=*,
+    % itemindent=3ex
+    ]
+    \item \textbf{Sequence Learning: } Given $D$, \hirl segments the task into $k$ sub-tasks whose start and end are defined by arrival at a set of transitions $G = [\rho_1,...,\rho_k]$.
+    \item \textbf{Reward Learning: } Given $G$ and $D$, \hirl associates a local reward function with the segment resulting in a sequence of rewards $\mathbf{R}_{seq}$. 
+    \item \textbf{Policy Learning: } Given $\mathbf{R}_{seq}$ and $G$, \hirl applies reinforcement learning for $I$ iterations to learn a policy for the task $\pi$.
+\end{enumerate}
+
+\noindent\textbf{Outputs:} Policy $\pi$
 
 
 

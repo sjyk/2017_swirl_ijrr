@@ -1,38 +1,73 @@
-\section{\hirlfull}
+\section{\hirl: Sequence Learning}
 \seclabel{hirl}
-This section describes an algorithm to infer the parameters for the proposed model.
+The first phase of \hirl is to segment the demonstrations into consistent segments.
+Let $D=\{d_i\}$ be a set of demonstrations of a robotic task.
+Each demonstration of a task $d$ is a discrete-time sequence of $T$ state vectors in a feature-space $\mathcal{X}$.
+The feature space can be a concatenation of kinematic features $X_{k}$ (e.g., robot position) and sensory features $X_{s}$ (e.g., visual features from the environment).
 
-\subsubsection{Algorithm Description}
-Let $D$ be a set of demonstration trajectories $\{d_1,...,d_N\}$ of a task with a delayed reward.
-\hirl can be described in terms of three sub-algorithms:
+\begin{definition}[Segmentation]
+A segmentation of task is defined as a function $\mathbf{S}_k$ that assigns each state in every demonstration trajectory to an integer $1,2,...,k$:
+\[
+\mathbf{S}_k: d \mapsto [k]
+\]
+and $\mathcal{S}_k$ is a non-decreasing function in time (no repetitions).
+\end{definition}
 
-\vspace{2pt}
-\noindent\textbf{Inputs:} Demonstrations $D$
-\begin{enumerate}[
-    topsep=0pt,
-    noitemsep,
-    % partopsep=1ex,
-    % parsep=1ex,
-    leftmargin=*,
-    % itemindent=3ex
-    ]
-    \item \textbf{Sequence Learning: } Given $D$, \hirl segments the task into $k$ sub-tasks whose start and end are defined by arrival at a set of transitions $G = [\rho_1,...,\rho_k]$.
-    \item \textbf{Reward Learning: } Given $G$ and $D$, \hirl associates a local reward function with the segment resulting in a sequence of rewards $\mathbf{R}_{seq}$. 
-    \item \textbf{Policy Learning: } Given $\mathbf{R}_{seq}$ and $G$, \hirl applies reinforcement learning for $I$ iterations to learn a policy for the task $\pi$.
-\end{enumerate}
+This means that not only is each demonstration divided into k segments but these segments are corresponded across demonstrations with indices.
+This is the definition of sequential task segmentation used in our prior work~\cite{krishnan2015tsc,murali2016}.
+However, in this paper, we need a further restriction that the segmentation method preserves the Markov Decision Process structure, and can be applied during a rollout.
 
-\noindent\textbf{Outputs:} Policy $\pi$
+\begin{definition}[Markov Segmentation]
+A Markov segmentation function is a task segmentation where the segmentation index of time $t+1$ can be completely determined by the state at time $t$ and the index at time $t$:
+\[
+i_{t+1} = \mathbf{M}(s_t, i_t)  
+\]
+\end{definition}
 
+Not all segmentation functions satisfy the Markov segmentation property. For example, a model where the terminal state of the trajectory determines how the trajectory is divided into segments.
+This can happen in Bayesian algorithms that require a forward-backward estimate for segment inference.
 
-\subsection*{Phase I. Sequence Learning}
-\seclabel{algo}
-The first phase of \hirl is to segment the demonstrations into locally linear segments.
-We can then cluster the segment endpoints into $k$ clusters to infer  $[\rho_1,...,\rho_k]$. This is an extension of our prior work on robust task segmentation~\cite{krishnan2015tsc,murali2016}.
-The overall procedure is summarized in Phase I.
+\subsection{Learning Markov Segmentation Criteria}
+The first challenge in \hirl is designing such Markov Segmentation functions.
+Our key insight is that one can extract such a function with a probabilistic model from an underlying non-Markov segmentation technique.
+Suppose, we are given a general function that just identifies candidate segment endpoints.
+Such a function is weaker than a segmentation function since it does not globally label the detected segments.
 
-\subsubsection{Segmentation and Transition Clustering}
-The first step is given a set of demonstration trajectories, decompose each trajectory into segments.
-A popular approach for segmentation is to use Gaussian Mixture Models~\cite{calinon2014skills}, namely, cluster all state observations and identify times at which $x_t$ is in a different cluster than $x_{t+1}$.
+\begin{definition}[Transition Indicator Function]
+A transition indicator function $\mathbf{T}$ is a function that maps each kinematic state in a demonstration $d$ to $\{0,1\}$:
+\[
+\mathbf{T}: d \mapsto \{0,1\}
+\]
+\end{definition}
+
+The above definition naturally leads to a notion of transition states, the states and times at which transitions occur.
+
+\begin{definition}[Transition States]
+For a demonstration set $D$, Transition States are the set of state-time tuples where the indicator is 1:
+\[
+\Gamma = \{(x,t) \in D : \mathbf{T}(t) = 1\}
+\]
+\end{definition}
+
+We model the set $\Gamma$ as samples from an underlying distribution over the state-space and time.
+\[
+\Gamma \sim f(x,t)
+\]
+Then, we can model the distribution as a GMM:
+\[
+f(x,t) = GMM(\pi,\{\mu_1,...,\mu_k\}, \{\Sigma_1,...,\Sigma_k\})
+\]
+The interpretation of this distribution is $\pi$ describes the fraction of transitions assigned to each mixture component, $\mu_i$ describes the centroid of the mixture component, and $\Sigma$ describes the covariance.
+Our prior work~\cite{krishnan2015tsc,murali2016}, describes a number of practical optimizations such as pruning low-confidence mixture components.
+
+One can think of these mixture as defining ellipsoids by taking the confidence level-sets in the state-space and time that characterize regions where transitions occur.
+These regions are ordered since they are also defined over time, since we make the assumption that the confidence threshold for the level sets is tuned so that the regions are disjoint.
+Thus, reaching one of these regions defines a testable condition based on the current state, time, and previously reached regions--which is a Markov Segmentation Function.
+The result is exactly the set of transition regions: $G = [\rho_1, \rho_2,...,\rho_k]$, and segmentation of each demonstration trajectory into $k$ segments.
+
+\subsection{Experimental Implementation}
+In our experiments, we use the following transition identification algorithm.
+A popular approach for transition identification is to use Gaussian Mixture Models~\cite{calinon2014skills}, namely, cluster all state observations and identify times at which $x_t$ is in a different cluster than $x_{t+1}$.
 For a given time $t$, we can define a window of length $\ell$ as:
 \[
 \mathbf{n}^{(\ell)}_t = [x_{t-\ell},...,x_{t}]^\intercal
@@ -52,21 +87,9 @@ However, we apply results from Bayesian non-parametric statistics and jointly so
 Using a DP, the number of components grows with the complexity of the observed data (we denote this as DP-GMM).
 
 
-In prior work, we noticed that motion-based segmentation algorithms can be unreliable when there is noise~\cite{krishnan2015tsc}.
-We, however, realized that applying a second level of cluster--clustering the segment endpoints found dense clusters of common transitions that occurred in all demonstrations--thus allowing us to reject spurious motions or observation noise.
-The insight of this work is that the same approach can be interpreted as identifying necessary sub-goals in a complex task.
-
-We would like to be able to aggregate the transition times into state-space conditions for reward transitions $[\rho_1,...,\rho_k]$.
-To each of these transition times, there is a corresponding \emph{transition state}--the last state before the dynamics switched.
-We can model these regions againwith a Gaussian Mixture Model with $k$ mixture components $\{m_1,...,m_k\}$.
-As before, we use a DP to non-parametrically set $k$.
-Then, we prune clusters that do not have at least one transition from each demonstration.
-Thus, the result is the set of transition regions: $G = [\rho_1, \rho_2,...,\rho_k]$, and segmentation of each demonstration trajectory into $k$ segments.
-
-\subsubsection{Relaxing Local Linearity}
+\subsection{Relaxing Local Linearity}
 GMM's are a type of local Bayesian linear regression, but we can easily relax the linearity assumption.
 We relax the linear dynamics assumption with a kernel embedding of the trajectories.
-\hirl does not require learning the exact regimes $A_i$,  it only needs to detect changes in dynamics regime.
 The basic idea is to apply Kernelized PCA to the features before learning the transitions--a technique used in Computer Vision~\cite{DBLP:conf/nips/MikaSSMSR98}.
 By changing the kernel function (i.e., the similarity metric between states), we can essentially change the definition of local linearity.
 

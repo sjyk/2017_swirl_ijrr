@@ -20,7 +20,7 @@ This paper explores combining unsupervised trajectory segmention with IRL, and w
 Then, \hirl uses the segmented trajectories to infer both the reward functions $\mathbf{R}_{seq}$ and the transition regions $G$ from the demonstration trajectories.
 Finally, \hirl learns a policy over the sequence of local rewards using RL.
 
-Adding segmentation to the IRL problem introduces some additional challenges.
+Adding segmentation to the IRL problem introduces some additional challenges, and part of the contribution of this work is to formalize these issues.
 The segmentation algorithm must preserve the Markov structure of the problem, that is, it is possible to determine whether a segment transition has occured based only only the state and the current segment.
 Learning a policy from segmented rewards is nontrivial because solving $k$ independent problems neglects any shared structure in the value function during the policy learning phase (e.g., a common failure state).
 However, jointly optimizing over the segmented problem inherently introduces a dependence on history, namely, any policy must complete step $i$ before step $i+1$.
