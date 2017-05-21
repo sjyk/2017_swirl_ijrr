@@ -1,0 +1,78 @@
+\section{\hirl:\hirlfull}
+In this section, we present the Hierarchical Inverse Reinforcement Learning model.
+
+\subsection{\hirl Model}
+We are given an MDP $\mathcal{M}$ with a known, but difficult to optimize, ``true'' reward function $R_{true}$ that is a binary indicator of success in some robotic task.
+Let $D$ be a set of demonstrations $\{d_1,...,d_N\}$, we call these demonstrations \emph{expert} demonstrations if they are trajectories sampled from executions of the optimal policy $\pi^*$ with respect to $R_{true}$.
+We assume that we are given featurization function $f:S\times A \mapsto \mathbb{R}^p$, and with this function, a demonstration is also a trajectory denoted by $x_t$ in $\mathbb{R}^p$.
+The goal of \hirl is to construct a reward function $R_{seq}$ with shorter-term rewards whose optimal policy $\pi^\dagger$ approximates the performance of $\pi^*$.
+
+We model $R_{true}$ in the following way.
+Let $\rho \subseteq \mathbb{R}^p$ be subset of the state-space called a sub-goal.
+A task is defined as an \emph{a priori} unknown sequence of sub-goals:
+\[
+G = [\rho_1,...,\rho_k]
+\]
+A task is successful, i.e., $R_{true}=1$, when all of the $\rho_i \in G$ are reached in sequence.
+\hirl proposes an algorithm to learn $G$ in the case when the regions $\rho_i$ correspond to changes in local linearity, and following from $G$, $R_{seq}$ can be represented as a sequence of local rewards $[R^{(1)}_{seq},...,R^{(k)}_{seq}]$. 
+The local reward sequence will serve to guide the agent to each of the $\rho_i$ more efficiently than the sparse true reward $R_{true}$.
+
+\subsection{Locally Linear Sub-goals}
+Consider the agent's trajectory in $\mathbb{R}^p$ as a dynamical system,
+\[
+x_{t+1} = \mathcal{T}(x_{t}) + w_{t},
+\]
+with i.i.d unit variance Gaussian process noise.
+We model sub-tasks as locally-linear, that is, that the system $\mathcal{T}$ can be decomposed into a set of state-dependent linear systems:
+\[
+x_{t+1} = A_{i}\mathbf{x}_t + w_{t} \text{ : } A_i \in \{A_1,...,A_m\}.
+\]
+\emph{Transitions} are defined as times where $A_{t} \ne A_{t+1}$.
+Thus, each transition will have an associated feature value $\mathbf{x}_{t}$ called a transition state.
+The key insight from our prior work~\cite{krishnan2015tsc} is that the transition states have a meaningful spatial structure.
+For example, we model these $\mathbf{x}_{t}$ as generated from a Gaussian Mixture Model (GMM) over the feature space $\mathbb{R}^p$.
+We assume that the mixture components are separable~\cite{dasgupta2000two}.
+
+We interpret this mixture model as defining sub-goals for the task.
+If there $k$ mixture components for the distribution $\{m_1,...,m_k\}$, the quantile of each component distribution will define sequence of regions $[\rho_1,...,\rho_k]$ over the feature space (i.e., its sublevel set bounded by $z_\alpha$ and ordered by time), and can equivalently be thought of as $\rho_i = (\mu_i,\Sigma_i)$.
+We interpret the learned $G = [\rho_1,...,\rho_k]$ as the sub-goals reached by the expert demonstrations.
+Reaching transition states are associated with attaining rewards in the task, and when all of the transition states in $G$ are reached in sequence the agent is successful. 
+Our Appendix contains details about this approach and intuition on where such a model may arise (Section \ref{sec:appendix1}).
+
+\subsection{State-Space Augmentation}
+Since, we are decomposing the task into a sequence of sub-goals, it leads to a problems that can no longer be modeled as an MDP.
+Attaining a reward at goal $\rho_i$ depends on knowing that the reward at goal $\rho_{i-1}$ was attained.
+This sequential dependence problem can arise even if the original problem is an MDP.
+To model this dependence on the past, we have to construct an MDP whose state-space also includes history.
+At first glance, this may seem impractical, but we can show that leveraging $G$ to compress this prior history leads to tractable learning problem.
+
+Given a finite-horizon MDP $\mathcal{M}$ as defined in Section \ref{sec:back}, we can define an MDP $\mathcal{M}_H$ as follows.
+Let $\mathcal{H}$ denote set of all dynamically feasible sequences of length $\le T$ comprised of the elements of $S$.
+Therefore, for an agent at any time $t$, there is a sequence of previously visited states $H_t \in \mathcal{H}$.
+The MDP $\mathcal{M}_H$ is defined as:
+\[
+\mathcal{M}_H = \langle S \times \mathcal{H},A,P'(\cdot,\cdot), R_\theta(\cdot,\cdot),T \rangle.
+\]
+For this MDP, $P'$ not only defines the transitions from the current state $s \mapsto s'$, but also increments the history sequence $H_{t+1} = H_{t} \sqcup s$.
+Accordingly, the parametrized reward function $R_\theta$ is defined over $S$, $A$, and $H_{t+1}$.
+
+By modeling assumption, we know that a sufficient statistic for task success is knowing that all of the transition states $G$ were reached.
+We can use this fact to concisely encode the history of the agent $H_t \in \mathcal{H}$ in terms of transition states previously which is a $k$ dimensional vector $\{0,1\}^k$.
+Then, additional complexity of representing the reward with history over $S \times  \{0,1\}^k$ is only $\mathbf{O}(k)$ instead of exponential in the time horizon.
+
+\subsection{Reward Learning and Policy Evaluation}
+With this model and the state-space augmentation, we can apply standard techniques for inverse and ``forward" RL.
+
+\vspace{0.5em} \noindent \textbf{Inverse Reinforcement Learning: } We can apply standard techniques for IRL over the augmented state-space $S \times  \{0,1\}^k$. Suppose, we are considering linear functions of features of state-action tuples $R_{\theta}(s,a) = f(s,a)^T\theta$, we can apply the same reasoning to state-action-segment tuples $R_{\theta}(s,a) = \binom{f(s,a)^T}{v}\theta$, where $v \in \{0,1\}^k$ and indicates the sub-goal progress. Then, conditioned on each possible $v$ (i.e., the current task progress), we can find the local reward sequence $[R^{(1)}_{seq},...,R^{(k)}_{seq}]$. 
+In principle, we can apply any IRL technique, and in this work, we apply the widely used Maximum Entropy IRL~\cite{DBLP:conf/aaai/ZiebartMBD08}.
+
+\vspace{0.5em} \noindent \textbf{Rewards to Policies: }
+In principle, we can apply many different policy learning techniques to learn a policy given the reward function over the augmented state-space $S \times  \{0,1\}^k$. In this paper, we use Q-learning to address the policy learning problem, and evaluate the claim of whether \hirl rewards lead to faster convergence. However, one could also apply these learned rewards in a framework like Guided Policy Search~\cite{DBLP:journals/corr/LevineFDA15}, or even in an optimal control framework like iLQR~\cite{li2004iterative}.
+
+
+
+
+
+
+
+

@@ -1,0 +1,45 @@
+\section{Introduction}
+One of the goals of learning from demonstrations (LfD) is to learn policies that generalize beyond the provided examples and are robust to perturbations in initial conditions, the environment, and sensing noise~\cite{argall2009survey}.
+Inverse Reinforcement Learning (IRL) is a popular framework, where the objective is to infer an unknown reward function from a set of demonstrations~\cite{DBLP:conf/nips/KolterAN07, coates2008learning, abbeel2004apprenticeship}.
+Once a reward is learned, given novel instances of a task, a policy can be computed by optimizing for this reward function using an policy search approach like Reinforcement Learning (RL)~\cite{ng2000algorithms, abbeel2004apprenticeship}.
+
+In IRL, a task is modeled as an MDP with a single unknown function that maps states and actions to scalar values. 
+This model is limited in the way that it can represent \emph{sequential tasks}, tasks where a robot must reach a sequence of intermediate state-space goals in a particular order.
+In such tasks, the inferred reward may be \emph{delayed}
+and reflect a quantity observed after all of the goals are reached, and thus, making it very difficult to optimize directly. 
+Furthermore, there may not exist a single stationary policy for a given state-space that achieves all of the goals in sequence, e.g., a figure-8 trajectory in the x,y plane.
+
+To address this problem, one approach is to divide the task into segments with local reward functions that ``build up'' to the final goal.
+In existing work on multi-step IRL, this sequential structure is defined manually~\cite{DBLP:conf/nips/KolterAN07}.
+We propose an approach that automatically learns sequential structure and assigns local reward functions to segments.
+The combined problem is nontrivial because solving $k$ independent problems neglects the shared structure in the value function during the policy learning phase (e.g., a common failure state).
+However, jointly optimizing over the segmented problem inherently introduces a dependence on history, namely, any policy must complete step $i$ before step $i+1$.
+This potentially leads to an exponential overhead of additional states. 
+
+\hirlfull (\hirl) is based on a model for sequential tasks that represents them as a sequence of reward functions $\mathbf{R}_{seq}=[R_1,...,R_k]$ and transition regions (subsets of the state-space) $G = [\rho_1, ...,\rho_k]$ such that $R_1$ is the reward function until $\rho_1$ is reached, after which $R_2$ becomes the reward and so on.
+\hirl assumes that demonstrations are locally optimal (as in IRL), and all demonstrations reach each $\rho \in G$ in the same sequence.
+In the first phase of the algorithm, \hirl segments the demonstrations and infers the transition regions using a kernelized variant of an algorithm proposed in our prior work~\cite{krishnan2015tsc,murali2016}.
+In the second phase, \hirl uses the inferred transition regions to segment the set of demonstrations and applies IRL locally to each segment to construct the sequence of reward functions $\mathbf{R}_{seq}$.
+Once these rewards are learned, \hirl computes a policy using an RL algorithm (Q-Learning) over an augmented state-space that indicates the sequence of previously reached reward transition regions. We show that this augmentation has an additional space complexity independent of the state-space and linear in the number of rewards.
+
+\vspace{3pt}
+\noindent \textbf{Our contributions are:}
+\begin{enumerate}[
+    topsep=0pt,
+    noitemsep,
+    % partopsep=1ex,
+    % parsep=1ex,
+    leftmargin=*,
+    % itemindent=3ex
+    ]
+\item A three-phase algorithm, \hirl, to learn policies for sequential robot tasks.
+\item We extend the Transition State Clustering algorithm~\cite{krishnan2015tsc,murali2016} with kernelization for segmentation that is robust to local non-linear (but smooth) dynamics.
+\item A novel state-space augmentation to enforce sequential dependencies using binary indicators of the previously completed segments, which can be efficiently stored and computed based on the first phase of \hirl.
+\item Simulation and physical experiments comparing \hirl with Supervised Learning and MaxEnt-IRL.
+% Experiments suggest that \hirl can generalize from the demonstrations to unseen examples and is robust to noise in the environment and initial conditions. 
+\end{enumerate}
+
+
+
+
+%\todo{Add numbers}

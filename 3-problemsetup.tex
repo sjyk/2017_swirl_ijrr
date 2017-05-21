@@ -1,0 +1,180 @@
+%\documentclass[0-main.tex]{subfiles}
+%\begin{document}
+
+\section{Model Analysis}
+In this section, we analyze the model and provide some formal interpretations.
+
+\subsection{Sequence of Stable Feedback Controllers}\label{sec:control}
+We have provided an informal justification of the locally-linear Transition State model in terms of object contacts and manipulation conditions.
+Now, we formalize these conditions from a control theoretic perspective.
+This model naturally follows from a system controlled with linear state feedback control to the centroids of $k$ target regions $[\rho_1,...,\rho_k]$. 
+
+In the Transition State Model,  $[\rho_1,...,\rho_k]$ are defined as the superlevel sets of multivariate Gaussian distributions.
+For each of the Gaussian mixture components, let $\{\mu_1,...,\mu_k\}$ denote the respective expectations and $\{\Sigma_1,...,\Sigma_k\}$ denote the respective covariances.
+We can show that the Transition State Clustering model naturally follows from of a sequence of stable linear full-state feedback controllers sequentially controlling the system to each $\mu_i$ (up-to some tolerance defined by $\alpha$).
+
+Suppose, we model the agent's trajectory in feature space as a linear dynamical system with a fixed dynamics.
+Let $A_r$ model the agent's linear dynamics and $B_r$ model the agent's control matrix:
+\[
+\mathbf{x}(t+1) = A_r\mathbf{x}(t) + B_r\mathbf{u}(t) + W(t).
+\]
+For a particular mixture component $i$, the agent applies a linear feedback controller with gain $G_i$, regulating around the target state $\mu_i$.
+This can be represented as the following system:
+\[
+\hat{\mathbf{x}}(t) = \mathbf{x}(t) - \mu_i 
+\]
+\[
+\hat{\mathbf{x}}(t+1) = (A_r-G_iB_r)\hat{\mathbf{x}}(t)+ W(t).
+\]
+If this system is stable, it will converge to the state $\hat{\mathbf{x}}(t) = \mathbf{0}$ which is  $\mathbf{x}(t) = \mu_i$ as $t \rightarrow \infty$.
+However, since this is a finite time problem, we model a stopping condition, namely, the system is close enough to $\mathbf{0}$.
+For some $z_\alpha$ (e.g., in 1 dimension 95\% quantiles are $Z_{5\%} = 1.96$):
+\[
+\hat{\mathbf{x}}(t)^T \Sigma^{-1}_i \hat{\mathbf{x}}(t) \le z_\alpha.
+\]
+If the agent's trajectory was modeled as a sequence $1...K$ of such controllers, we would observe the Transition State Clustering model with each $A_i = A_r-G_iB_r$, and the clusters would be an Expectation Maximization estimate of the $(\mu_i, \Sigma_i)$.
+
+\subsection{History MDP}
+Strictly speaking, the model posed in the previous section is not an MDP since its reward function depends on the past.
+To model this dependence on the past, we have to model an MDP whose state-space also include history.
+At first glance, this may seem impractical, but we can show that leveraging the segmentation to compress this prior history leads to tractable learning problem.
+
+Given a finite-horizon MDP $\mathcal{M}$ as defined in Section \ref{sec:back}, we can define an MDP $\mathcal{M}_H$ as follows.
+Let $\mathcal{H}$ denote set of all dynamically feasible sequences of length $\le T$ comprised of the elements of $S$.
+Therefore, for an agent at any time $t$, there is a sequence of previously visited states $H_t \in \mathcal{H}$.
+The MDP $\mathcal{M}_H$ is defined as:
+\[
+\mathcal{M}_H = \langle S \times \mathcal{H},A,P'(\cdot,\cdot), R_\theta(\cdot,\cdot),T \rangle.
+\]
+For this MDP, $P'$ not only defines the transitions from the current state $s \mapsto s'$, but also increments the history sequence $H_{t+1} = H_{t} \sqcup s$.
+Accordingly, the parametrized reward function $R_\theta$ is defined over $S$, $A$, and $H_{t+1}$.
+In principle, one could apply IRL directly to $\mathcal{M}_H$.
+However, we show that the general problem is computationally hard.
+
+\vspace{0.5em}
+
+\subsubsection{Representation Problem}
+Consider the general case of the IRL problem, given $\mathcal{M}_H$ with an unknown reward function with arbitrary dependence on history and a set of demonstration trajectories $D$, infer the reward function $R$.
+
+We want to understand the complexity of this general problem\footnote{Note that our analysis is done in the discrete case as typical with Reinforcement Learning,  but it is not a restriction of the method}.
+First, it is clearly impractical to exactly represent $R$ in all but toy examples.
+We quantify this by the dimensionality of the parameters needed to describe $R$, where in the worst case we need one parameter for each sequence in $\mathcal{H}$.
+
+\vspace{0.5em}
+
+\begin{proposition}[Space Complexity]
+If $\mathcal{M}_H$ is a finite-state MDP, then the representation of $R$ for $\mathcal{M}_H$ has a worst-case parameter dimensionality of $\mathbf{O}(\exp(T))$.
+\end{proposition}
+
+\vspace{0.5em}
+
+\subsubsection{Encoding Problem}
+Instead, our model concisely encodes the history of the agent $H_t \in \mathcal{H}$ in terms of segments previously traversed which is a $k$ dimensional vector.
+Then, additional complexity of representing the reward with history is $\mathbf{O}(k)$ instead of exponential.
+We formalized a model where the rewards are sparse; a very small number of the possible sequences $\mathcal{H}_R \subseteq \mathcal{H}$ lead to non-zero rewards.
+
+\todo{There is a commented out proof showing that feature selection for the general problem is PSPACE-Hard, SK is in the process of re-writing.}
+
+\iffalse
+However, it turns out that sparsity is not the only important property.
+For the class of tasks formalized in the previous section, the rewards have a very particular dependence on history.
+It turns out this is crucial to avoid a PSPACE-Hard feature selection problem.
+
+Let us consider what would happen if this was not the case, namely, that the rewards could have a more complex dependence on the history.
+We model this as a feature selection problem.
+Let us assume that the rewards for $\mathcal{M}_H$ have the following linear parametrized structure:
+\[
+R(s,H_t,a) =  f(s,H_t,a)^T \theta.
+\]
+The objective of the feature selection problem is to construct a feature vector $f(s,H_t,a)$ such that the reward function is completely determined.
+Suppose, there are a finite set of sequences $\mathcal{H}_R=\{H_R^{(1)},...,H_R^{(k)}\}$ that lead to a non-zero reward.
+Then, $f(s,H_t,a)$ can be an indicator vector indicating whether $H_t$ matches any of the elements of $\mathcal{H}_R$, and $\theta = \mathbf{1}$.
+If we have a system where we observe the reward at every state $s$, can we determine $\mathcal{H}_R$?
+
+\begin{proposition}[Feature Selection]
+Given a finite-state MDP 
+Given a reward function $R$ that is history dependent, identifying a minimal set of features (in terms of cardinality) such that $R$ is completely determined at every state is PSPACE-Hard.
+\end{proposition}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+This analysis is quite pessimistic and makes no assumptions about the structure of $S$ or $A$, and in practice, we often make such simplifying assumptions.
+
+
+One such assumption is to consider rewards with following structure:
+\[
+R(s,H_t,a) =  f(s,H_t,a)^T \theta
+\]
+where $f(s,H_t,a)$ is a feature vector that maps the states and action pairs to $\mathbb{R}^p$.
+Then, even over the history, the dimensionality of the parametrized reward function is $\mathbf{O}(p)$ since it is parametrized by a $p$ dimensional vector.
+However, designing such a feature vector in $\mathbb{R}^p$ is typically left to the user.
+
+The next question is how hard is it to construct such a feature vector optimally (i.e., completely determines a reward functions).
+We will show that solving this problem in general would imply a solution Non-Deterministic Finite Automaton (NFA) minimization, thus the complexity class of the optimal feature selection problem is PSPACE-hard, which is widely conjectured to be harder than PTIME.
+
+\vspace{0.5em}
+
+
+
+\vspace{0.5em}
+
+We show that one-specific instance of the problem is equivalent to NFA minimization, thus proving the result by reduction.
+
+
+
+Consider a specific representation for $R$ that is a reward that is earned only is a certain set of states have been previously traversed:
+\[
+R'(s,a) = R(s,a) \cdot [\Pi_{i=0}^k \mathbf{I}(s_{i} \in H_t)]
+\]
+for $\{s_1,...,s_k\}$ that are states in the state-space $s_i \subseteq S$, the function $\mathbf{I}(s_{i} \in H_t)$ indicates whether the state $s_i$ has been previously traversed, and $R(s,a)$ is a binary reward earned for the current state.
+To completely determine this class of rewards with $k$ features, we have to know $\{s_1,...,s_k\}$, i.e., optimal feature selection.
+
+A deterministic finite automaton (DFA) $\mathcal{A}$ is an MDP but with deterministic transitions.
+However, we are interested in how the reward transitions as a function of the state.
+Let $S_A$ be the state-space of $\mathcal{A}$, define another finite-automaton $\mathcal{A}^R$ which has the state-space $S_A \times \mathbb{Z}_2$.
+In its state, $\mathcal{A}^R$ also keeps track of the cumulatively achieved reward function $R'$. 
+Since $R'$ is dependent on history  $\mathcal{A}^R$ is not a DFA but a Non-Deterministic Finite Automaton.
+The problem of feature selection, i.e., determining all of the state-visit indicator functions, is equivalent to finding a minimal state representation for $\mathcal{A}^R$; removing impossible states and merging states whose effect on the reward are indistinguishable.
+Thus, the problem of optimal feature selection is equivalent to finding a minimal NFA representation of the process, which is known to be PSPACE-complete.
+
+\vspace{0.5em}
+
+For the general problem, we either have inefficiency in space in terms of representing a complex reward function or we have inefficiency in time-complexity in selecting features to encode the reward.
+While the general problem is hard, there might be special cases where we can exploit the structure of the task.
+For example, in physical tasks, we often know that such important features of history correlate with object contacts, changes in motion, and forces/torques applied.
+\fi
+
+\subsection{Benefits of Knowing Segments}
+There are two ways in which we can apply the sequential consumable reward model.
+First, there are tasks that are inherently sequential such as assembly.
+For such tasks, there is a natural notion of sub-goals (i.e., the assembly of all of the components), and it is clear that a consumable reward model is required to learn optimal policies.
+A similar argument is clear for problems with partial observation, where some important states are not seen.
+Knowing previously traversed states can disambiguate optimal actions.
+Segmentation is one way to concisely encode the process history to allow for history dependent policies.
+
+On the other hand, we also consider ``segmented" tasks, where the tasks can be solved without sequential consumable rewards albeit slowly.
+Surprisingly, we find that fitting a consumable reward model to such tasks actually leads to rewards that sometimes converge faster in forward RL (Section \ref{sec:exp})--even over techniques such as classical IRL, and we provide some intuition on why this can be the case.
+
+\todo{SK: will illustrate each one of these cases}
+
+\subsubsection{Simpler Local Policies} The additional segment features $v$ can also simplify policies leading to faster convergence. Consider the case, where the optimal policy is piecewise constant for each task segment. While this policy is easy to describe in terms of the features $v$, it may can be difficult to model in terms of the state-space $S$.
+
+\subsubsection{Predictable Recovery} For more complex tasks, the agent will likely encounter states not seen in the set of demonstrations $D$, which will not be reflected in the reward function. In this case, the agent will explore until it arrives at known states and continue.
+The additional features $v$ that track the segment progress encourage the agent to recover to the next sub-goal.
+On the other hand, without the additional features IRL can miss sub-goals, leading to more unseen states in the future.
+We find that when the number of demonstrations is relatively small (e.g, $5$) rewards constructed with \tsh (IRL with segment features) converges faster than IRL alone.
+
+%The contribution of this work is to develop a state-representation for IRL and not the IRL technique itself. Therefore, we consider a prototypical IRL method as an example called Maximum Entropy Inverse Reinforcement Learning (MaxEnt-IRL)~\cite{DBLP:conf/aaai/ZiebartMBD08}.
+
+%\end{document}

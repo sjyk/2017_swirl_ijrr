@@ -1,0 +1,107 @@
+%\documentclass[0-main.tex]{subfiles}
+%\begin{document}
+
+\section{Transition State Identification Algorithm}\label{sec:algo}
+Now, we describe the transition state identification algorithm, which is derived from our prior work~\cite{krishnan2015tsc,murali2016}.
+
+\subsection*{Step 1. Featurization}
+The first step is to apply $f$ to every state-action pair in the demonstrations.
+Every $d_i$ in $D$ is a sequence of $T$ state-action pairs:
+\[
+[(s_1,a_1),...,(s_T,a_T)].
+\]
+For each state-action pair, we apply the featurization $[ f(s_1,a_1),...,f(s_T,a_T)]$.
+This gives us a $T$-step trajectory in the feature space $\mathbb{R}^p$ which we denote as $\mathbf{x}_t$.
+
+\subsection*{Step 2. Finding Transitions}
+Each demonstration, $\mathbf{x}_t$, is a trajectory in $\mathbb{R}^p$.
+The key idea is to be able to detect switches in a noisy system.
+There are a number of different techniques in the change-point detection literature~\cite{harchaoui2009kernel} that use kernels in time-series, however these do not often consider systems with dynamics.
+One technique that has empirically found a lot of success in robotics has been to linearize non-linear dynamics with a GMM model~\cite{moldovan2013dirichlet,calinon2014task, khansari2011learning}.
+It can be formally shown that a GMM model is equivalent to Bayesian Weighted Local Linear Regression to approximate a system $x_{t+1} = \mathcal{T}(x_{t}) + \epsilon$~\cite{moldovan2013dirichlet}.
+To make this paper self-contained, we provide justification for this method with proofs in our Appendix~(Section \ref{sec:appendix2}).
+
+In terms of intuition, consider the following system with a non-linear $\mathcal{T}$:
+\[
+x_{t+1} = \mathcal{T}(x_{t}) + w_{t}
+\]
+We could model this in a probabilistic way, where there is some joint probability density $p$ over both $x_{t}$ and $x_{t+1}$. 
+Since the function is non-linear, the joint distribution $p$ can be very complex.
+We choose to model $p$ as a GMM:
+\[
+p(x_{t},x_{t+1}) \sim GMM(k)
+\]
+This has the interpretation of defining locally linear dynamics, since conditioned on one of the mixture components, the conditional expectation $\mathbf{E}[x_{t+1} \mid  x_{t}]$ is linear.
+
+In typical GMM formulations, we have to select the number of mixture components $m$ before hand.
+However, we can apply results in Bayesian non-parametric statistics and jointly solve for the component locations and the number of components with an algorithm called DP-GMM~\cite{kulis2011revisiting} with a soft prior over the number of clusters\footnote{We use the default settings in \url{https://pypi.python.org/pypi/dpcluster}}.
+
+The identification procedure is summarized in Algorithm \ref{alg:tsh1}.
+We construct a data matrix $\Gamma$ which is the set of $\gamma(t)$ over all demonstrations and times, where $\gamma(t)$ defines a window of $l$ time-steps.
+We apply DP-GMM to $\Gamma$ and map each $\gamma(t)$ to a most likely mixture component, and thus for each demonstration $i$ we get $\gamma_{index}^{(i)}(t)$ which gives us the cluster index at time $t$.
+Then, we identify all of the times $t$ such that $\gamma_{index}^{(i)}(t) \ne \gamma_{index}^{(i)}(t+1)$, and the final result is a set $\Theta$ of tuples of demonstration id $i$ and time $t$.
+In prior work, we found that this procedure is robust to noise and can scale well to higher dimensions~\cite{krishnan2015tsc,murali2016}.
+
+\begin{algorithm}[t]
+\small
+\DontPrintSemicolon
+\caption{Transition Identification \label{alg:tsh1}}
+\KwData{Set of demonstrations:$\mathcal{D}$}
+
+$\Gamma \leftarrow \emptyset$
+
+\ForEach{$d_i \in \mathcal{D}$}{
+   \ForEach{$t \in 0,1,...,T_i$}{
+        $\gamma(t) = [\mathbf{x}_{t-k+1},...,\mathbf{x}_{t}]^T$
+        
+        $\Gamma = \Gamma \cup \gamma(t)$
+   }
+}
+$\{\gamma_{index}^{(1)}(t),...,\gamma_{index}^{(N)}(t)\} \leftarrow$ \texttt{DP-GMM($\Gamma$)}
+\vspace{0.5em}
+
+$\Theta \leftarrow \emptyset$
+
+\ForEach{$d_i \in \mathcal{D}$}{
+   \ForEach{$t \in 0,1,...,T_i$}{
+        \If{$\gamma_{index}^{(i)}(t) \ne \gamma_{index}^{(i)}(t+1)$}{
+        $\Theta = \theta \cup (i,t)$
+        }
+   }
+}
+
+\KwResult{The set of transitions $\Theta$}
+\end{algorithm}
+
+\subsection*{Step 3. Correspondence}
+Across all demonstrations, the set of transition states induces a density over the feature-space and time.
+Intuitively, when an agent enters certain regions of the state-space at certain times, there is a propensity to switch.
+We are interested in aggregating nearby (spatially and temporally) transition states together.
+We model this density as a Gaussian Mixture Model with $k$ mixture components $\{m_1,...,m_k\}$.
+As before, we learn this with DP-GMM in the feature space to find these clusters.
+
+Each of the mixture components is a multivariate Gaussian distribution with some mean and covariance.
+Individually, each of the mixture components is a Gaussian distribution, and defines a region of the feature space and a time interval.
+Thus, the result is exactly the set of target goal regions:
+\[
+G = [\rho_1, \rho_2,...,\rho_m].
+\]
+The overall procedure is summarized in Algorithm \ref{alg:tsh2}.
+
+\begin{algorithm}[t]
+\small
+\DontPrintSemicolon
+\caption{Transition State Clustering \label{alg:tsh2}}
+\KwData{Set of transitions:$\Theta$}
+
+$Y \leftarrow \emptyset$
+
+\ForEach{$(i,t) \in \Theta$}{
+   $Y \leftarrow Y \cup x^{(i)}_{t}$
+}
+$G = [\rho_1, \rho_2,...,\rho_m]\leftarrow$ \texttt{DP-GMM(Y)}
+
+\KwResult{The set of transition state clusters $G$}
+\end{algorithm}
+
+%\end{document}

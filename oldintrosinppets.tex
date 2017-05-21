@@ -1,0 +1,86 @@
+
+\iffalse
+uses these segments to concisely, and (3) applies IRL to learn a reward that is a function of both the current state/action and vector indicating previously traversed segments.  
+
+Learning a reward across this representation naturally enforces the aforementioned sequentiality and allows for information sharing between segments.
+
+
+
+
+a model for tasks with sequential goals which we call the \emph{Sequential Consumable Reward Model}, (2) how inferring the goal states of this model is related to segmentation, and (3)
+
+how to segment a set of demonstrations into sub-tasks, (2) how to use the sub-tasks to construct reward functions, and (3) models 
+
+how to leverage segmentation to construct reward functions that lead to faster convergence, (2) 
+
+models for sequential RL problems
+
+
+From a small number of demonstrations, we found that we could learn a segmented task structure with segments that closely matched expert annotations.
+In this paper, we explore whether a similar unsupervised segmentation technique can simplify reward design in the the presence of delayed reward, partial observation, and/or sequential constraints.
+This new problem is not trivial, since naively solving $k$ independent RL problems disregards any shared structure between the subtasks. 
+For example, regardless of whether the parallel parking agent is positioning or reversing, colliding with one of the obstacles is undesirable.
+On the other hand, simply placing rewards strategically at the end-points of segments can lead to inconsistencies since there is nothing enforcing the order of operations.
+
+
+segment a task into smaller subtasks with local rewards.
+
+
+
+
+
+More subtly, RL algorithms can also struggle in situations with sequential constraints and partial observation~\cite{DBLP:journals/corr/ZhangLMFA15, DBLP:journals/corr/HeessHLS15}, as the optimal policies may not be stationary, i.e., independent of time.
+
+Consider the problem of parallel parking using RL (Figure \ref{example}). 
+There are two steps in parallel parking, which we call positioning and reversing.
+This problem has delayed rewards because if the car does not perform the positioning step accurately, the car may miss the target when reversing.
+Furthermore, depending on which states are observed, the optimal policy may be non-stationary.
+For example, if the car's state-space is only defined in terms of $(x,y,\theta)$, the optimal policy has time-dependence since the positioning and reversing steps can cross over the same state but require two different actions in either case.
+
+
+
+
+
+
+
+
+To address these challenges, we frame this problem as Inverse Reinforcement Learning (IRL), which is broadly the problem of inferring a reward function given trajectories of an optimal policy.
+Using an IRL formulation, we want to learn the reward structure and the segmentation jointly in a way that both exploits any shared structure and enforces any coupling between the segments.
+
+
+We propose a three-stage approximation procedure that leverages the dynamical structure in many robotic tasks.
+For example, in physical systems, we often know that such important features of history correlate with object contacts, changes in motion, and forces/torques applied.
+Consequently, our framework: (1) decomposes the task into candidate segments based on changes in locally-linear dynamical regimes, (2) uses these segments to concisely encode the sequence of previous states traversed, and (3) applies IRL to learn a reward that is a function of both the current state/action and vector indicating previously traversed segments.  
+Therefore, the state-space not only contains the local trajectory information of the current state, but also the high-level structure of which subtask the agent is currently performing.
+Learning a reward across this representation naturally enforces the aforementioned sequentiality and allows for information sharing between segments.
+
+This approximation is motivated by a class of tasks that we formalize called \emph{Sequential Consumable Reward Tasks}, where an agent receives a reward for visiting a set of $k$ states in a particular sequence.
+The motion of the agent is characterized by a sequence of variable length locally-linear motions, and upon receiving a reward the agent switches between motion regimes.
+
+
+We propose a new algorithmic framework called \tshfull (\tsh).
+\tsh utilizes our previously developed Transition State Clustering model to design a learned function that parametrizes the history of a process by mapping previously visited states to their corresponding task segment.
+
+\subsection{Main Results}
+Here is a summary of our main results informally, and forward reference to the detailed discussion.
+
+\vspace{0.5em}
+
+\noindent\textbf{Hardness of Learning History-Dependent Rewards (Section \ref{sec:hard}): } We show that space complexity of representing an arbitrary reward function of both the current state and all preceding states is exponential in the time-horizon. We further show that the optimal selection of features to reduce this space complexity is at least as hard as Non-Deterministic Finite Automaton Minimization (PSPACE-hard). Informally, either the user pays in space or in time for modeling history dependent rewards.
+
+\vspace{0.5em}
+
+\noindent\textbf{Sequential Consumable Reward Model (Section \ref{sec:seq}): } Recognizing that the general case is hard, we define a subclass of MDP problems where the rewards have a particular dependence on history. We consider sequential tasks where an agent has to visit each region in a set of regions of the state-space $\{\rho_1,...\rho_k\}$ in sequence.
+Rewards are only given upon first entry and if all previous regions are visited.
+
+\vspace{0.5em}
+
+\noindent\textbf{\tshfull  (Section \ref{sec:algo}): }
+We present one technique to learn the rewards as well as the segments for the aforementioned model~\cite{krishnan2015tsc,murali2016}.
+This learns a feature representation that can be integrated with with almost all IRL techniques, and we use MaxEnt-IRL as a representative example.
+
+\vspace{0.5em}
+
+\noindent\textbf{Experimental Results  (Section \ref{sec:exp}): }
+\fi
+

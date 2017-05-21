@@ -1,0 +1,48 @@
+\section{Introduction}
+A key challenge for Reinforcement Learning (RL) is problems where rewards are \emph{delayed}, namely, the agent learns about the consequence of its actions well after it makes a decision.
+However, delayed rewards are inherent to robotics domains such as surgery, manufacturing, and personal robotics.
+In such domains, the ``true'' reward function may reflect a quantity that is very difficult to directly optimize, e.g., whether or not a wound is completely sutured.
+On the other hand, for the purposes of learning, a more useful abstraction is to consider the problem in shorter steps, e.g., ensure each of the stitches is in the correct position and orientation. 
+In general, for complex tasks, there is a natural hierarchy of sub-tasks which compose into larger elements and an important problem is to automatically learn such structure from observed expert demonstrations.
+
+Addressing this problem requires drawing from two distinct lines of RL literature, Inverse Reinforcement Learning (IRL) and Hierarchical Reinforcement Learning (HRL). In IRL problems, we given an MDP $\mathcal{M}$ except for the reward function, and a set of demonstrations $\mathcal{D}=\{d_1,...,d_N\}$ which are trajectories of the optimal policy $\pi^*$ with respect to that unknown reward.
+The objective is to infer the reward given the demonstrations~\cite{DBLP:conf/icml/NgHR99,DBLP:conf/aaai/ZiebartMBD08, coates2008learning, DBLP:conf/ijcai/MacGlashanL15, DBLP:conf/aaai/JudahFTG14}.
+On the other hand, HRL has considered the problem of constructing hierarchies of sub-tasks and how to share information between these sub-tasks~\cite{csimcsek2004using,menache2002q,mcgovern2001automatic, dietterich2000hierarchical}.
+This paper explores whether we can jointly infer the hierarchical structure of some tasks and reward functions.
+
+Consider the following two level hierarchy of MDPs.
+Sub-tasks are modeled as MDPs defined over the same state-space, action space, and dynamics, but have different local rewards and termination conditions.
+The progression between the sub-tasks is itself an MDP where the state-space is defined as current overall task progress (i.e., the complete sub-tasks) and the action are to apply some local policy $\pi$ to the next sub-task.
+In this model, the dynamics that transition between sub-tasks need not be sequential and can involve loops. 
+Furthermore, in principle, this hierarchy can now become arbitrarily complex, where even larger tasks can be composed of hierarchies of MDPs.
+
+In this paper, we propose \hirlfull (\hirl) which learns two-level hierarchies from demonstrations. 
+In \hirl, we are given a common state-space, action-space, and dynamics model for all of the sub-tasks. 
+We are also given a set of demonstrations $D$ that are trajectories sampled from optimal policies (ones that are optimal for both levels of the hierarchy).
+The learning algorithm has two phases: structure learning and reward learning.
+
+In the first phase, which we call structure learning, we segment the observed demonstrations into distinct policy regimes using change point detection.
+The key idea is that two different policies $\pi_1$ and $\pi_2$ will likely induce different distributions over the state and action-space, and since the agent is only allowed to use a stationary policy per sub-task we can infer that a change point marks a transition between sub-task.
+The locations of the state-space at which these transitions occur allow us to learn the termination conditions of the candidate sub-tasks.
+
+After learning the termination conditions, facilitates the next phase: reward learning.
+We propose a technique that ``flattens'' the hierarchy by adding additional states to the state-space that track the overall progress of a task without losing the local structure.
+We use the learned termination conditions to concisely encode the sequence of previous states traversed in terms of prior subtasks completed in a vector $v$.
+Then, we solve an IRL problem across all of the sub-tasks with trajectories that consist not only of state and action tuples, but also include the vector $v$.
+Therefore, the state-space not only contains the local trajectory information of the current state, but also which segment is current active.
+This learns a reward that is localized to each segment as well as enforcing any global structure such as order of operations.
+
+Somewhat surprisingly, this approach is related to a set of problems that we studied in prior work in the context of dynamical systems~\cite{krishnan2015tsc,murali2016}.
+Suppose a system generates trajectories  characterized by a sequence of variable length linear dynamical motions.
+The Transition State Clustering problem is to infer regions of the state-space where dynamical regimes transitioned.
+This model is motivated by physical systems, where we often know that such important events such as, object contacts and forces/torques applied, are often correlated with changes in regime.
+It further naturally follows from a model where there is a linear state-feedback controller controlling the system to a sequence of reference points.
+
+
+
+
+
+
+
+
+

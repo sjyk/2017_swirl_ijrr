@@ -1,0 +1,34 @@
+\section{Future Work}
+Our experimental results are very promising as they suggest that segmentation can indeed improve convergence in RL problems.
+We believe that the proposed \hirl is a special case of a broader problem of learning hierarchies in MDPs.
+One avenue for future work is modeling complex tasks as hierarchies of MDPs, namely, tasks composed of multiple MDPs that switch upon certain states and the switching dynamics can be modeled as another MDP. 
+
+\subsection{Sub-Task Model}
+We formalize the local problems studied in this paper in terms of MDPs.
+We can generalize the definition of an MDP to allow for indefinite time-horizons.
+Let $\mathcal{M}$ be an MDP as before, but instead of a finite-time horizon let $T:S\mapsto\{true,false\}$ be a stopping rule: 
+\[\mathcal{M}=\langle S,A,P(\cdot,\cdot),R,T(\cdot)\rangle\]
+Instead of executing a policy for a fixed T steps, the MDP executes until $T(\cdot)$ is true. 
+The Linear-Gaussian dynamics in this paper are a special case of this idea.
+
+A set of sub-tasks defines a universe $\mathcal{U} = \{\mathcal{M}_1,...,\mathcal{M}_k\}$ if they  are defined over the same state-space, action-space, and have the same dynamics. Within a universe, the only things that vary between sub-tasks are the reward functions and stopping rules
+$\mathcal{M}_{i}=\langle R_{i},T_{i}\rangle$.
+
+\subsection{Composite Task Model}
+Given a universe of sub-tasks $\mathcal{U}$, a composite task is itself an MDP.
+The current state of a composite task is a sub-task which is currently active and the termination state of the previous sub-task, so the state space $\mathbf{S} = \mathcal{U} \times S$.
+The action space for the composite task is the set of policies $\mathcal{U}$ which is a next sub-task to attempt.
+There is a transition function $P_{c}$ that given a current sub-task will transition to another sub-task in with some probability $\mathcal{U}$ conditioned on the outcome of the executed sub-task (the terminal state).
+There is also a global reward $R_{c}$ and a global termination condition $T_{c}$:
+\[
+\mathcal{C} = \langle \mathbb{S}, \mathcal{U}, P_{c}, R_{c}, T_{c} \rangle
+\]
+This paper only studied sequential tasks with deterministic progressions, but  there are more opportunities to model interesting hierarchies with stochastic and non-sequential heirarchies.
+
+\section{Conclusion}
+Partitioning a task into sub-tasks with shorter-term rewards can lead to faster convergence to successful policies, but the challenge is defining the correct sub-task abstractions.
+This paper explored a model for learning this partitioning from a set supervisor demonstrations.
+We proposed framework \hirlfull (\hirl), and it addresses two problems: (1) given a set of featurized demonstration trajectories learn the locally linear sub-tasks, (2) use the learned subtasks to construct additional features for use in IRL.
+We evaluate \hirl on 7 different domains with varying levels of non-linearity, stochasticity, partial observation, and state-space dimensionality.
+We find that rewards constructed with \hirl converge the fastest in comparison to the alternatives (up-to $6$x faster than second best): IRL without segmentation, RL with a default delayed reward, and augmenting the state-space with a sliding window memory.
+For the domains with known ground truth, we found that \hirl was within 10\% of the max reward achieved to \emph{a priori} perfect knowledge.

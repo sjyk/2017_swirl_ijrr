@@ -1,0 +1,117 @@
+ \documentclass[letterpaper, 10 pt, conference]{ieeeconf}
+ %DRAFT MODE preserves formatting otherwise; %comment out
+% \usepackage[draft]{graphics}
+
+\let\labelindent\relax
+\input{preamble}
+
+% Macro for Algorithm Name 
+\newcommand{\hirl}{HIRL\xspace}
+\newcommand{\HIRL}{HIRL\xspace}
+\newcommand{\hirlfull}{Hierarchical Inverse Reinforcement Learning\xspace}
+\newcommand{\tsh}{TSH\xspace}
+\newcommand{\TSH}{TSH\xspace}
+\newcommand{\tshfull}{Transition State Hashing\xspace}
+\newcommand{\tsco}{TSC\xspace}
+\newcommand{\sys}{\textsf{TSC+VIS}\xspace}
+
+\newcommand{\tsce}{\texttt{TSC-Endpoint}\xspace}
+\newcommand{\tsci}{\texttt{TSC-IRL}\xspace}
+
+\newboolean{include-notes}
+\setboolean{include-notes}{true}
+\newcommand{\fp}[1]{\ifthenelse{\boolean{include-notes}}%
+ {\textcolor{blue}{\textbf{FP: #1}}}{}}
+%===============================================================
+
+\title{\LARGE \bf
+HIRL: Hierarchical Inverse Reinforcement Learning \\
+for Long-Horizon Tasks with Delayed Rewards
+}
+%Pixels to Primitives: Learning Sub-Task Level Semantic Segmentation \\
+%of Multi-Step Task Trajectories from Video with %Deep Learning 
+
+% Visual Transition State Clustering: \del{Using} Deep Learning with \del{to Featurize} Multi-Modal Trajectories For Unsupervised Sub-Task Level Semantic Segmentation \\
+
+% Visual Transition State Clustering: Unsupervised Segmentation of Multi-Modal Trajectories with Deep Learning based Video Features\\
+
+\author{%
+Sanjay Krishnan, 
+Animesh Garg, 
+Richard Liaw,
+%Simon E. Zimmerman,\\
+Lauren Miller,
+Florian T. Pokorny,
+% Pieter Abbeel, 
+Ken Goldberg%, %{\footnotesize \textcolor{blue}{[v0.5, \today\,\currenttime]}} 
+%\thanks{\hrule \vspace{5pt} * These authors contributed equally to the paper}%
+\thanks{EECS \& IEOR, University of California, Berkeley CA USA; \texttt{\{sanjaykrishnan, animesh.garg,rliaw, ftpokorny, laurenm, goldberg\}@berkeley.edu}}%
+% \thanks{$^{1}$EECS, University of California, Berkeley; {\{sanjaykrishnan, adithya\_murali\}@berkeley.edu}}%
+% \thanks{$^{2}$IEOR and EECS, University of California, Berkeley; {\{animesh.garg, goldberg\}@berkeley.edu}}%
+}
+
+\IEEEoverridecommandlockouts %to enable thanks to appear
+
+\begin{document}
+
+%\setlength{\belowdisplayskip}{0.8pt} \setlength{\belowdisplayshortskip}{1pt}
+%\setlength{\abovedisplayskip}{0.8pt} \setlength{\abovedisplayshortskip}{1pt}
+%\setlength{\belowcaptionskip}{-10pt}
+%\selectfont
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}
+\newtheorem{problem}{Problem}
+\newtheorem{property}{Property}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+
+\maketitle
+
+
+\begin{abstract}
+Reinforcement Learning (RL) struggles in problems with delayed rewards, and one approach is to segment the task into sub-tasks with incremental rewards.
+We propose a framework called \hirlfull (\hirl), which is a model for learning sub-task structure from demonstrations.
+\hirl decomposes the task into sub-tasks based on transitions that are consistent across demonstrations. These transitions are defined as changes in local linearity w.r.t to a kernel function~\cite{krishnan2015tsc}. 
+Then, \hirl uses the inferred structure to learn reward functions local to the sub-tasks but also handle any global dependencies such as sequentiality.
+
+We have evaluated \hirl on several standard RL benchmarks: Parallel Parking with noisy dynamics, Two-Link Pendulum, 2D Noisy Motion Planning, and a Pinball environment.
+In the parallel parking task, we find that rewards constructed with \hirl converge to a policy with an 80\% success rate in 32\% fewer time-steps than those constructed with Maximum Entropy Inverse RL (MaxEnt IRL), and with partial state observation, the policies learned with IRL fail to achieve this accuracy while \hirl still converges.
+We further find that that the rewards learned with \hirl are robust to environment noise where they can tolerate 1 stdev. of random perturbation in the poses in the environment obstacles while maintaining roughly the same convergence rate.
+We find that \hirl rewards can converge up-to $6\times$ faster than rewards constructed with IRL.
+\end{abstract} 
+
+
+\fontsize{10pt}{12.5pt}
+\selectfont
+
+\input{1-intro.tex}
+\input{2-relatedwork.tex}
+\input{3-model.tex}
+%\subfile{3-problemsetup.tex}
+\input{4-segmentation.tex}
+\input{5-embedding.tex}
+\input{5-reward-design.tex}
+\input{6-results.tex}
+\input{7-conclusion.tex}
+
+{\footnotesize 
+\noindent \textbf{Acknowledgements:}
+We would like to thank Anca Dragan, Stuart Russell, and Pieter Abbeel for discussions about this work.
+We would also like to thank Daniel Seita, Jeff Mahler, and Michael Laskey for their feedback on early drafts.
+This research was performed with UC Berkeley's Automation Sciences Lab under the UC Berkeley Center for Information Technology in the Interest of Society (CITRIS)``People and Robots'' Initiative http://robotics.citris-uc.org, and 
+UC Berkeley's Algorithms, Machines, and People Lab.}
+
+%\href{http://j.mp/v-tsc}{j.mp/v-tsc}
+
+% \normalsize \selectfont
+
+\bibliographystyle{IEEEtranS}
+\bibliography{deepP2P}
+
+\appendix
+\input{appendix.tex}
+
+\end{document}
