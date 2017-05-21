@@ -1,55 +1,35 @@
 \section{Introduction}
 Learning from Demonstrations (LfD) is an effective approach to derive a robotic controller from observations of an expert supervisor~\cite{argall2009survey}.
 One of the primary challenges in LfD is generalization, where the learned policy must extrapolate from the observed demonstrations to new instances of the same task.
-Generalization can be difficult with a purely observational approach (i.e., no physical rollouts) due to differences between the demonstration and execution dynamics~\cite{abbeel2004apprenticeship}, modeling errors~\cite{ross2011reduction}, or simply because the demonstrations are noisy or inconsistent~\cite{krishnan2015tsc}.
+Generalization can be difficult with a purely observational approach (i.e., no physical rollouts) due to differences between the demonstration and execution dynamics~\cite{abbeel2004apprenticeship}, modeling errors~\cite{ross2011reduction}, or because the demonstrations are noisy or inconsistent~\cite{krishnan2015tsc}.
 Prior work on \emph{apprenticeship learning}~\cite{DBLP:conf/nips/KolterAN07, coates2008learning, abbeel2004apprenticeship} argues for a two-phase approach that first applies Inverse Reinforcement Learning (IRL) to infer the supervisor's implicit reward function, and then optimizes for this reward function using an policy search approach like Reinforcement Learning (RL)~\cite{ng2000algorithms, abbeel2004apprenticeship}.
 
+However, apprenticeship learning faces the same challenges in scaling to tasks with long time horizons as \emph{ab initio} RL.
+Learned reward functions can be delayed, where the consequences of an action are only observed long after it is taken, leading to difficulties in assigning credit.
+This reward function might be very difficult to directly optimize, in terms of sample-complexity, for every new task instance.
+Such reward functions are inherrent to domains such as assembly or robotic surgery where a robot must reach a sequence of precise state-space goals in a particular order for the task to be successful.
+ 
+Recently, there has been significant interest in unsupervised segmentation algorithms that partition a task into a sequence of temporally extended steps and correspond them across demonstrations~\citep{barbivc2004segmenting, chiappa2010movement,  alvarez2010switched,calinon2010learning, kruger2012imitation, niekum2012learning, wachter2015hierarchical, lee2015autonomous}.
+Segmentation has long been a part of LfD~\citep{argall2009survey}, since it facilitates learning localized control policies~\citep{murali2015learning, niekum2012learning, konidaris2011robot}, adaptation to unseen scenarios~\citep{ijspreet2002learning, ude2010task}, and demonstrator skill-assessment~\citep{reiley2010motion, gao2014jigsaws}.
+However, existing work in the IRL/apprenticeship learning setting has only considered manually designed segments~\cite{DBLP:conf/nips/KolterAN07}.
+This paper explores combining unsupervised trajectory segmention with IRL, and whether this combination can reduce the sample-complexity of long-horizon tasks.
 
-Apprenticeship learning faces the same challenges with long time horizons as \emph{ab initio} RL.
-Learned reward functions can be delayed, where the consequences of an action are only observed long after it is taken, leading to challenges in assigning credit.
-This is particularly an issue in domains such as assembly or robotic surgery where a robot must reach a sequence of precise state-space goals in a particular order for the task to be successful.
-The motivation of this paper is to explore techniques to scale such algorithms to longer time horizons.
-The key insight is to divide the task into segments with local reward functions that ``build up'' to the final goal.
-
-We propose \hirlfull (\hirl), which is a three phase algorithm, that c: (1) unsupervised trajectory segmentation, (2) local inverse reinforcement learning, and (3) policy learning.
-For each one of these three phases, we characterize 
-
-
-
-
-
-
-To address this problem, one approach is to divide the task into segments with local reward functions that ``build up'' to the final goal.
-In existing work on multi-step IRL, this sequential structure is defined manually~\cite{DBLP:conf/nips/KolterAN07}.
-We propose an approach that automatically learns sequential structure and assigns local reward functions to segments.
-The combined problem is nontrivial because solving $k$ independent problems neglects the shared structure in the value function during the policy learning phase (e.g., a common failure state).
-However, jointly optimizing over the segmented problem inherently introduces a dependence on history, namely, any policy must complete step $i$ before step $i+1$.
-This potentially leads to an exponential overhead of additional states. 
-
-\hirlfull (\hirl) is based on a model for sequential tasks that represents them as a sequence of reward functions $\mathbf{R}_{seq}=[R_1,...,R_k]$ and transition regions (subsets of the state-space) $G = [\rho_1, ...,\rho_k]$ such that $R_1$ is the reward function until $\rho_1$ is reached, after which $R_2$ becomes the reward and so on.
+\hirlfull (\hirl) models a task as a sequence of quadratic rewards $\mathbf{R}_{seq}=[R_1,...,R_k]$ and transition regions (subsets of the state-space) $G = [\rho_1, ...,\rho_k]$ such that $R_1$ is the reward function until $\rho_1$ is reached, after which $R_2$ becomes the reward and so on.
 \hirl assumes that demonstrations are locally optimal (as in IRL), and all demonstrations reach each $\rho \in G$ in the same sequence.
-In the first phase of the algorithm, \hirl segments the demonstrations and infers the transition regions using a kernelized variant of an algorithm proposed in our prior work~\cite{krishnan2015tsc,murali2016}.
-In the second phase, \hirl uses the inferred transition regions to segment the set of demonstrations and applies IRL locally to each segment to construct the sequence of reward functions $\mathbf{R}_{seq}$.
-Once these rewards are learned, \hirl computes a policy using an RL algorithm (Q-Learning) over an augmented state-space that indicates the sequence of previously reached reward transition regions. We show that this augmentation has an additional space complexity independent of the state-space and linear in the number of rewards.
+\hirl identifies segments in each demonstration that correspond to when a reward is active.
+Then, \hirl uses the segmented trajectories to infer both the reward functions $\mathbf{R}_{seq}$ and the transition regions $G$ from the demonstration trajectories.
+Finally, \hirl learns a policy over the sequence of local rewards using RL.
 
-\vspace{3pt}
-\noindent \textbf{Our contributions are:}
-\begin{enumerate}[
-    topsep=0pt,
-    noitemsep,
-    % partopsep=1ex,
-    % parsep=1ex,
-    leftmargin=*,
-    % itemindent=3ex
-    ]
-\item A three-phase algorithm, \hirl, to learn policies for sequential robot tasks.
-\item We extend the Transition State Clustering algorithm~\cite{krishnan2015tsc,murali2016} with kernelization for segmentation that is robust to local non-linear (but smooth) dynamics.
-\item A novel state-space augmentation to enforce sequential dependencies using binary indicators of the previously completed segments, which can be efficiently stored and computed based on the first phase of \hirl.
-\item Simulation and physical experiments comparing \hirl with Supervised Learning and MaxEnt-IRL.
-% Experiments suggest that \hirl can generalize from the demonstrations to unseen examples and is robust to noise in the environment and initial conditions. 
-\end{enumerate}
+Adding segmentation to the IRL problem introduces some additional challenges.
+The segmentation algorithm must preserve the Markov structure of the problem, that is, it is possible to determine whether a segment transition has occured based only only the state and the current segment.
+Learning a policy from segmented rewards is nontrivial because solving $k$ independent problems neglects any shared structure in the value function during the policy learning phase (e.g., a common failure state).
+However, jointly optimizing over the segmented problem inherently introduces a dependence on history, namely, any policy must complete step $i$ before step $i+1$.
+Learning a memory-dependent policy could lead to an exponential overhead of additional states. 
 
-
-
+\hirl addresses these challenges by using a variant of a segmentation algorithm proposed in our prior work~\cite{krishnan2015tsc,murali2016}, called Transition State Clustering (TSC). The basic insight of TSC is that a number of trajectory segmentation models (e.g., direction changes, clustering, model-based) were sensitive to noise, leading to inconsistent segments across repeated demonstrations.
+TSC enhances these models by first using them to identify a set of candidate segment transitions in each trajectory, and then fits a mixture model to the transition states (states at times transitions occur) in terms of kinematic, sensory, and temporal features. 
+While our original motivation was to improve the robustness of segmentation algorithms, a useful property is that it learns a probabilistic model for segment transition given the previous segment has completed.
+This property allows the model to be evaluated online during RL to indicate to the robot which segment is currently active.
+\hirl computes a policy using an RL algorithm (Q-Learning) over an augmented state-space that indicates the sequence of previously reached reward transition regions. We further show that this augmentation has an additional space complexity independent of the state-space and linear in the number of rewards---and not the potential exponential complexity of a full memory-dependent policy.
 
 %\todo{Add numbers}
