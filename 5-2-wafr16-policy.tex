@@ -8,18 +8,41 @@ Furthermore, simply taking the aggregate of the rewards can lead to inconsistenc
 The key insight is that a single policy can be learned jointly over all segments over a modified problem where the state-space with additional variables that keep track of the previously achieved segments.
 
 \subsection{Off Policy RL Algorithms}
+There are two classes of RL algorithms, on-policy algorithms (e.g., Policy Gradients, Trust Region Policy Optimization) and off-policy algirithms (e.g., Q-Learning). An on-policy algorithm learns the value of the policy being carried out by the agent and incrementally optimizes this policy. On policy are often more efficient since the robot learns to optimize the reward function in states that it is likely to visit, however, it requires that exploration is done with a specific policy that is continuously updated.
+On the other hand, off-policy algorithms learn value of the optimal policy regardless of the policy used to collect the data, as long the robot sufficiently explores the space.
+This is highly beneficial for our problem setting.
+A single fixed exploration policy can be used to collect a large batch of data up front, which we can use to refine our model.
+This is the motivation for using a Q-Learning approach in \hirl.
 
+\subsection{Segmentation Introduces Memory}
+In our sequential task definition, we cannot transition to reward $R_{i+1}$ unless all previous transition regions $\rho_{1},...\rho_{i}$ are reached in sequence.
+This introduces a dependence on the history which violates the MDP structure.
 
-\subsubsection{Policy Learning}
-Using our sequential task definition, we know that the reward transitions ($R_{i}$ to $R_{i+1}$) only depend on an arrival at the transition state $\rho_{i}$ and not any other aspect of the history.
+Naively addressing this problem can lead to an exponential cost in terms of state-representation.
+Given a finite-horizon MDP $\mathcal{M}$ as defined in Section \ref{sec:back}, we can define an MDP $\mathcal{M}_H$ as follows.
+Let $\mathcal{H}$ denote set of all dynamically feasible sequences of length smaller than $T$ comprised of the elements of $S$.
+Therefore, for an agent at any time $t$, there is a sequence of previously visited states $H_t \in \mathcal{H}$.
+The MDP $\mathcal{M}_H$ is defined as:
+\[
+\mathcal{M}_H = \langle S \times \mathcal{H},A,P'(\cdot,\cdot), R(\cdot,\cdot),T \rangle.
+\]
+For this MDP, $P'$ not only defines the transitions from the current state $s \mapsto s'$, but also increments the history sequence $H_{t+1} = H_{t} \sqcup s$.
+Accordingly, the parametrized reward function $R$ is defined over $S$, $A$, and $H_{t+1}$.
+$\mathcal{M}_H$ allows us to address the sequentiality problem since the reward is a function of the state and the history sequence.
+However, without some parametrization of $H_t$, directly solving this MDPs with RL is impractical since it adds an overhead of $\mathcal{O}(e^{T})$ states.
+
+Our key insight is to the leverage the definition of the Markov Segmentation function formalized earlier.
+We know that the reward transitions ($R_{i}$ to $R_{i+1}$) only depend on an arrival at the transition state $\rho_{i}$ and not any other aspect of the history.
 Therefore, we can store a vector $v$, a $k$ dimensional binary vector ($v \in \{0,1\}^k$) that indicates whether a transition state $i \in 0,...,k$ has been reached.
 This vector can be efficiently incremented when the current state $s \in \rho_{i+1}$.
+The result is an augmented state-space $\binom{s}{v}$ to account for previous progress.
 Then, the additional complexity of representing the reward with history over $S \times  \{0,1\}^k$ is only $\mathcal{O}(k)$ instead of exponential in the time horizon.
 
-The result is an augmented state-space $\binom{s}{v}$ to account for previous progress.
+\subsubsection{Policy Learning}
 Over this state-space, we can apply Reinforcement Learning algorithms to iteratively converge to a successful policy for a new task instance.
 \hirl applies Q-Learning with a Radial Basis Function value function representation to learn a policy $\pi$ over this state-space and the reward sequence $\mathbf{R}_{seq}$.
 This is summarized in Algorithm~\ref{alg:tsh3}.
+
 
 
 \begin{phase}[t]
@@ -53,24 +76,7 @@ Initialize $Q(\binom{s}{v},a)$ randomly
 
 
 
-\subsubsection{MDPs with Memory}
-RL algorithms apply to problems that are specified as MDPs.
-The challenge is that some sequential tasks may not be MDPs.
-For example, attaining a reward at $\rho_i$ depends on knowing that the reward at goal $\rho_{i-1}$ was attained.
-In general, to model this dependence on the past requires MDPs whose state-space also includes history.
 
-Given a finite-horizon MDP $\mathcal{M}$ as defined in Section \ref{sec:back}, we can define an MDP $\mathcal{M}_H$ as follows.
-Let $\mathcal{H}$ denote set of all dynamically feasible sequences of length smaller than $T$ comprised of the elements of $S$.
-Therefore, for an agent at any time $t$, there is a sequence of previously visited states $H_t \in \mathcal{H}$.
-The MDP $\mathcal{M}_H$ is defined as:
-\[
-\mathcal{M}_H = \langle S \times \mathcal{H},A,P'(\cdot,\cdot), R(\cdot,\cdot),T \rangle.
-\]
-For this MDP, $P'$ not only defines the transitions from the current state $s \mapsto s'$, but also increments the history sequence $H_{t+1} = H_{t} \sqcup s$.
-Accordingly, the parametrized reward function $R$ is defined over $S$, $A$, and $H_{t+1}$.
-
-$\mathcal{M}_H$ allows us to address the sequentiality problem since the reward is a function of the state and the history sequence.
-However, without some parametrization of $H_t$, directly solving this MDPs with RL is impractical since it adds an overhead of $\mathcal{O}(e^{T})$ states.
 
 
 
