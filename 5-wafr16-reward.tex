@@ -71,10 +71,9 @@ We can fit local linear models to each of the segments discovered in the previou
 \[
 A_j = \arg\min_{A} \sum_{i=1}^N \sum_{\text{seg j start}}^{\text{seg j end}} \|A x^{(i)}_{t} - x^{(i)}_{t+1}\|
 \]
-In this form, the problem can be analytically solved with techniques proposed in~\cite{ziebart2012probabilistic}.
+With $A_j$ known, $\gamma_{\theta}$ can be analytically solved with techniques proposed in~\cite{ziebart2012probabilistic}.
 \hirl applies MaxEnt-IRL to the sub-sequences of demonstrations between 0 and $\rho_1$, and then from $\rho_1$ to $\rho_2$ and so on.
 The result is an estimated local reward function $R_{i}$ modeled as a linear function of states that is associated with each $\rho_i$.
-
 
 \begin{phase}[t]
 \small
