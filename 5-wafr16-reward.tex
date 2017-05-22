@@ -51,57 +51,23 @@ R_i(x) = \theta^T y.
 
 \subsection{Inference Settings}
 The in MaxEnt-IRL gradient can be estimated reliably in two cases, discrete and linear-gaussian systems, since it requires an efficient forward search of the policy given a particular reward parametrized by $\theta$.
-Furthermore, in
+Furthermore, in both these cases, we have to estimate the system dynamics locally.
 
+\subsubsection{Discrete}
 Consider the case when the state-space is discrete.
+\textbf{SK. TODO}
 
 
 
-
-
-
-
-\subsubsection{Model-based}
-For the model-based approach, we use Maximum Entropy Inverse Reinforcement Learning (MaxEnt-IRL)~\cite{DBLP:conf/aaai/ZiebartMBD08}. 
-The idea is to model every demonstration $d_i$ as a noisy sample from an optimal policy.
-In other words, each $d_i$ that is observed is a noisy observation of some hypothetical $d^*$.
-
-Since each $d_i$ is a path through a possibly discrete state and action space, we cannot simply average them to find $d^*$.
-Instead, we have to model trajectories that the system is likely to visit. 
-This can be formalized with the following probability distribution:
-\[
-P(d_i | R) \propto \exp \{ \sum_{t=0}^T R(s_t) \}.
-\]
-Paths with a higher cumulative reward are more likely.
-
-MaxEnt-IRL uses the following linear parametrized representation:
-\[
-R(s,a) = x^T \theta,
-\]
-where $x$ is the state vector. The resulting form is:
-\[
-P(d_i | R) \propto \exp \{ \sum_{t=0}^T x^T \theta \},
-\]
-and MaxEnt-IRL proposes an algorithm to infer the $\theta$ that maximizes the posterior likelihood.
-
-
-
-This posterior inference procedure requires a dynamics model. We fit local linear models to each of the segments discovered in the previous section:
+\subsubsection{Linear}
+We fit local linear models to each of the segments discovered in the previous section:
 \[
 A_j = \arg\min_{A} \sum_{i=1}^N \sum_{\text{seg j start}}^{\text{seg j end}} \|A x^{(i)}_{t} - x^{(i)}_{t+1}\|
 \]
 In this form, the problem can be analytically solved with techniques proposed in~\cite{ziebart2012probabilistic}.
 \hirl applies MaxEnt-IRL to the sub-sequences of demonstrations between 0 and $\rho_1$, and then from $\rho_1$ to $\rho_2$ and so on.
 The result is an estimated local reward function $R_{i}$ modeled as a linear function of states that is associated with each $\rho_i$.
-
-\iffalse
-\subsubsection{Application Scenarios} While typically RL is applied in scenarios where dynamics models are unavailable, there are scenarios in which the model-based reward approach applies. Suppose we are given demonstrations of a known system, e.g., a simulator or a simplified version of a task, with different dynamics $P'$ but with the same overall task structure.
-While a policy learned in this setting would not transfer due to a change in dynamics, the reward function would.
-In our experiments, we demonstrate an example of this on a surgical cutting task where the robot has to cut along a marked line in gauze.
-We demonstrate cutting trajectories on a simplified cutting problem where the demonstrator quasi-statically traces the line without cutting it.
-Here there are known dynamics and we can learn transitions and local rewards (e.g., learning to follow the line).
-This reward can transfer to the policy learning phase, in which we can try to cut the gauze introducing unknown dynamics.
-\fi
+\textbf{SK. TODO}
 
 
 \begin{phase}[t]
@@ -121,7 +87,7 @@ If the dynamics model is not available compute Equation \ref{localq} for each se
 
 \vspace{-15pt}
 \subsubsection{Model-free: Local Quadratic Rewards}
-When the linearity assumption cannot be made, \hirl can alternatively use a model-free approach for reward construction.
+As a baseline, we also considered a much simpler reward construction approach.
 The role of the reward function is to guide the robot to the next transition region $\rho_i$.
 A straight forward thing approach is for each segment $i$, we can define a reward function as follows:
 \[
