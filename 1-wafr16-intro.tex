@@ -19,6 +19,8 @@ This paper explores combining unsupervised trajectory segmention with IRL, and w
 \hirl identifies segments in each demonstration that correspond to when a reward is active.
 Then, \hirl uses the segmented trajectories to infer both the reward functions $\mathbf{R}_{seq}$ and the transition regions $G$ from the demonstration trajectories.
 Finally, \hirl learns a policy over the sequence of local rewards using RL.
+In this paper, \hirl applies to problems with a discrete or continuous state-space and a discrete action-space.
+The discrete actions are not a fundemental restriction, but relaxing that constraint is deferred to future work.
 
 Adding segmentation to the IRL problem introduces some additional challenges, and part of the contribution of this work is to formalize these issues.
 The segmentation algorithm must preserve the Markov structure of the problem, that is, it is possible to determine whether a segment transition has occured based only only the state and the current segment.
