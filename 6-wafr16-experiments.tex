@@ -4,6 +4,22 @@
 \section{Experiments}\label{sec:exp}
 We evaluate \hirl with a series of standard RL benchmarks and in a physical experiment on the da Vinci surgical robot.
 
+
+\subsection{Toy Example: Discrete Planning}
+%BC (SVM, RF), RL ab initio , RL (Max Ent), k=2
+
+%transfer
+
+%number of segments
+
+%number of demonstrations
+
+%value iteration
+
+
+
+
+
 \subsection{Methodology}
 All of the experimental scenarios followed a similar pattern: (1) start with an RL problem with a delayed reward, (2) generate $N$ demonstration trajectories with motion planning in simulated scenarios and kinethestic demonstration in the physical experiments, (3) apply \hirl, (4) evaluate the performance of the policy as a function of the $I$ iterations.
 For all convergence curves presented, we show the probability of task success as a function of the number of RL iterations.
@@ -64,7 +80,7 @@ We call this domain Parallel Parking with Partial Observation (PP-PO).
 We generated 5 demonstrations using an RRT motion planner (assuming deterministic dynamics) and applied \hirl to learn the segments.
 Figure \ref{exp:rcsegmentation} illustrates the demonstrations and the learned segments. There are two intermediate goals corresponding to positioning the car and orienting the car correctly before reversing.
 
-\vspace{-15pt}
+
 \subsubsection{Performance}\label{exp:ppc} 
 In the fully observed problem, compared to MaxEnt-IRL, the model-based \hirl converges to a policy with a 60\% success rate with about 3x fewer time-steps.
 The gains for the model-free version are more modest with a 50\% reduction.
