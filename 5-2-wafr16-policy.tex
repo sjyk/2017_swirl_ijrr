@@ -33,23 +33,40 @@ However, without some parametrization of $H_t$, directly solving this MDPs with 
 
 Our key insight is to the leverage the definition of the Markov Segmentation function formalized earlier.
 We know that the reward transitions ($R_{i}$ to $R_{i+1}$) only depend on an arrival at the transition state $\rho_{i}$ and not any other aspect of the history.
-Therefore, we can store a vector $v$, a $k$ dimensional binary vector ($v \in \{0,1\}^k$) that indicates whether a transition state $i \in 0,...,k$ has been reached.
-This vector can be efficiently incremented when the current state $s \in \rho_{i+1}$.
+Therefore, we can store an index $v$, that indicates whether a transition state $i \in 0,...,k$ has been reached.
+This index can be efficiently incremented when the current state $s \in \rho_{i+1}$.
 The result is an augmented state-space $\binom{s}{v}$ to account for previous progress.
-Then, the additional complexity of representing the reward with history over $S \times  \{0,1\}^k$ is only $\mathcal{O}(k)$ instead of exponential in the time horizon.
+Then, the additional complexity of representing the reward with history over $S \times  [k]$ is only $\mathcal{O}(k)$ instead of exponential in the time horizon.
 
-\subsubsection{Policy Learning}
-Over this state-space, we can apply Reinforcement Learning algorithms to iteratively converge to a successful policy for a new task instance.
-\hirl applies Q-Learning with a Radial Basis Function value function representation to learn a policy $\pi$ over this state-space and the reward sequence $\mathbf{R}_{seq}$.
-This is summarized in Algorithm~\ref{alg:tsh3}.
+\subsection{Segmented Q-Learning}
+At a high-level, the objective of standard Q-Learning is to learn the function $Q(s,a)$ of the optimal policy, which is the expected reward the agent will recieve taking action $a$ in state $s$, assuming future behavior is optimal. 
+Q-Learning works by first initializing a random $Q$ function. Then, it samples rollouts from an exploration policy collecting $(s,a,r, s')$ tuples. From these tuples, one can calculate the following value:
+\[
+y_i = R(s,a) + \arg \max_{a} Q(s',a)
+\]
+Each of the $y_i$ can be used to define a loss function since if $Q$ was the true Q function then the following recurrence would hold:
+\[
+Q(s,a) = R(s,a) + \arg \max_{a} Q(s',a)
+\]
+So, Q-Learning defines a loss:
+\[
+L(Q) = \sum_{i} \|y_i - Q(s,a)\|_2^2
+\]
+This loss can be optimize with gradient descent. When the state and action space is discrete, the representation of the Q function is a table, and we get the familar Q-Learning algorithm--where each gradient step updates the table with the appropriate value. When Q function needs to be approximated, then we get the Deep Q Network algorithm.
 
+\hirl applies a variant of Q-Learning to optimize the policy over the sequential rewards. This is summarized in Algorithm~\ref{alg:tsh3}. The basic change to the algorithm is to augement the state-space with indicator vector that indicates the transition regions that have been reached. So each of the rollouts, now records a tuple $(s,\textbf{v},a,r, s', \textbf{v'})$ that additionally stores this information. The Q function is now defined over states, actions, and segment index--which also selects the appropriate local reward function:
+\[
+Q(s,a,v) = R_v(s,a) + \arg \max_{a} Q(s',a, v')
+\]
+We also need to define an exploration policy, i.e., a stochastic policy with which we will collect rollouts. To initialize the Q-Learning, we apply Behavioral Cloning locally for each of the segments to get a policy $\pi_i$. We apply an $\epsilon$-greedy version of these policies to collect rollouts.
 
+\vspace{0.5em} \noindent \textbf{Remarks: } Initializing with a Behavioral Cloning policy is not strictly necessary and a random initialization would suffice. In practice, we found that this was much more efficient on problems where the difference between the demonstration domain and execution domain was small.
 
 \begin{phase}[t]
 \small
 \DontPrintSemicolon
 \caption{Policy Learning \label{alg:tsh3}}
-\KwData{Transition States $G$, Reward Sequence $\mathbf{R}_{seq}$, exploration parameter $\epsilon$}
+\KwData{Transition States $G$, Reward Sequence $\mathbf{R}_{seq}$, exploration policy $\pi$}
 
 Initialize $Q(\binom{s}{v},a)$ randomly
 
@@ -61,7 +78,7 @@ Initialize $Q(\binom{s}{v},a)$ randomly
     Initialize $j$ to be $1$
     
     \ForEach{$t \in 0,...,T$}{
-        Choose best action $a$ based on $Q$ or random action w.p $\epsilon$.
+        Choose best action $a$ based on $\pi$.
         
         Observe Reward $R_{j}$
         
