@@ -71,14 +71,14 @@ Ken Goldberg%,
 \begin{document}
 
 \begin{abstract}
+\textbf{SK. TODO revise}
 Inverse Reinforcement Learning (IRL) allows a robot to generalize from demonstrations to previously unseen scenarios by learning the demonstrator's reward function.
 However, in multi-step tasks, the learned rewards might be delayed and hard to directly optimize.
-We present \hirlfull (\hirl), a three-phase algorithm that partitions a complex task into shorter-horizon subtasks based on linear dynamics transitions that occur consistently across demonstrations.
+We present \hirlfull (\hirl), a three-phase algorithm that partitions a complex task into shorter-horizon subtasks that occur consistently across demonstrations.
 \hirl then learns a sequence of local reward functions that describe the motion between transitions. 
 Once these reward functions are learned, \hirl applies Q-learning to compute a policy that maximizes the rewards. 
-We compare \hirl (demonstrations to segments to rewards) with Supervised Policy Learning (SPL - demonstrations to policies) and Maximum Entropy IRL (MaxEnt-IRL demonstrations to rewards) on standard Reinforcement Learning benchmarks: Parallel Parking with noisy dynamics, Two-Link acrobot, and a 2D GridWorld.
-We find that \hirl converges to a policy with similar success rates (60\%) in 3x fewer time-steps than MaxEnt-IRL, and requires 5x fewer demonstrations than SPL.
-In physical experiments using the da Vinci surgical robot, we evaluate the extent to which \hirl generalizes from linear cutting demonstrations to cutting sequences of curved paths.
+We formalize requirements on the segmentation algorithm that make this possible and evaluate \hirl in a number of discrete and continuous RL domains.
+In physical experiments using the da Vinci surgical robot, we evaluate the extent to which \hirl generalizes from linear cutting demonstrations to cutting sequences of curved paths and can help learn multi-step policies for deformable tensioning.
 \end{abstract} 
 
 \maketitle
@@ -90,7 +90,7 @@ In physical experiments using the da Vinci surgical robot, we evaluate the exten
 \input{3-wafr16-background.tex}
 \input{4-wafr16-segmentation.tex}
 \input{5-wafr16-reward.tex}
-\input{6-wafr16-policy.tex}
+\input{5-2-wafr16-policy.tex}
 \input{6-wafr16-experiments.tex}
 \input{7-wafr16-conclusion.tex}
 

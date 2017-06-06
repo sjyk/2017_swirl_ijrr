@@ -2,70 +2,110 @@
 %\begin{document}
 
 \section{Experiments}\label{sec:exp}
-We evaluate \hirl with a series of standard RL benchmarks and in a physical experiment on the da Vinci surgical robot.
-
-
-\subsection{Toy Example: Discrete Planning}
-%BC (SVM, RF), RL ab initio , RL (Max Ent), k=2
-
-%transfer
-
-%number of segments
-
-%number of demonstrations
-
-%value iteration
-
-
-
-
-
-\subsection{Methodology}
+We evaluate \hirl with a series of standard RL benchmarks and in  physical experiments on the da Vinci surgical robot.
 All of the experimental scenarios followed a similar pattern: (1) start with an RL problem with a delayed reward, (2) generate $N$ demonstration trajectories with motion planning in simulated scenarios and kinethestic demonstration in the physical experiments, (3) apply \hirl, (4) evaluate the performance of the policy as a function of the $I$ iterations.
 For all convergence curves presented, we show the probability of task success as a function of the number of RL iterations.
 For convergence rate, we measure the Area Under Curve of the learning curve (i.e., cumulative expected reward over the learning epoch).
 
-\noindent The algorithms considered in the experiments are:
-\begin{enumerate}[
-    topsep=0pt,
-    noitemsep,
-    % partopsep=1ex,
-    % parsep=1ex,
-    leftmargin=*,
-    % itemindent=3ex
-    ]
-    \item \textbf{Q-Learning: } This applies a Q-Learning algorithm with the same hyper-parameter setting as \hirl. 
-    \item \textbf{Pure MaxEnt-IRL: } Given $N$ demonstrations this learns a reward using MaxEnt-IRL and no hierarchical structure. Then, it applies Q-Learning with the same hyper-parameter setting as \hirl until convergence. (Only Phase II and III)
-    \item \textbf{SVM: } Given $N$ demonstrations this learns a policy using a multi-class SVM classifier. There is no further learning after training. (Directly to Policy)
-    \item \textbf{\HIRL (Model-Based) and \HIRL (Model-Free)} 
-\end{enumerate}
+\begin{figure}[t]
+\centering
+ \includegraphics[width=0.32\columnwidth]{concept/swirl1-rewards.png}
+  \includegraphics[width=0.32\columnwidth]{concept/swirl1-linear.png}
+   \includegraphics[width=0.32\columnwidth]{concept/swirl1-quadratic.png}
+ \caption{This plot illustrates a conceptual GridWorld task. The green square denotes the starting position and the red denotes the target. The first plot shows the basic task, the second plot shows the reward learned with IRL from 5 demonstrations with a linear reward parametrization, and the second plot shows the reward learned with a quadratic parametrization. \label{concept:1}}
+\end{figure}
 
-\iffalse
-\subsection{GridWorld}
-We start with an example of to illustrate how delayed rewards in sequential tasks pose a challenge in RL.
-We modified a variant of one of the canonical RL domains in RLPy~\cite{RLPy}, GridWorld, to illustrate how \hirl addresses problems of sequentiality (Figure~\ref{exp:gweasy1}). 
-% This experiment intuitively illustrates the challenge of sequential rewards in RL.
-RL algorithms find an optimal stationary policy, i.e., a time-invariant function between states and actions.
-Even straight-forward sequential dependencies can introduce situations where any successful policy needs to take two different actions in the same state, depending on stage of the task.
+\subsection{Conceptual Example: Discrete Planning}
+We start with a GridWorld example to illustrate the structure of tasks amenable to segmentation. 
 
-We constructed a grid world with two goal states denoted by ``0'' and ``1'' separated by a narrow passage to illustrate the challenge of sequential dependency.
-The robot can only receive the reward at ``1'' if it has previously reached ``0".
-In the $(x,y)$ state-space, the robot does not learn a correct stationary policy since at some states the optimal action depends on knowing whether ``0'' has been reached.
-Thus, directly applying RL to the this problem results in an algorithm that converges to finding only one reward.
-
-\hirl can address this problem. We first collect 3 demonstrations of manually traced out paths that go to ``0'' and then ``1''.
-The robot needs to know which phase of the task it is in and during this stage which reward point is the focus.
-\hirl learns three segments, and using a reward constructed with \hirl and an augmented state-space, Q-Learning converges to find both rewards.
-Since GridWorld has known dynamics, we used the model-based variant of of \hirl.
+\vspace{0.5em} \noindent \textbf{Motivating Experiments: } Before we discuss segmentation, the first hypothesis that we have to evaluate is whether IRL on its own can improve the convergence of RL. This hypothesis is not unreasonable since some problem have a naturally sparse reward function (e.g., 1 if a goal state is reached, 0 else where), and IRL would approximate this reward with a smoother quadratic function. So consider an 16 x 16 GridWorld with a start position in one corner and a goal in another corner (Figure \ref{concept:1}a). 
+The agent can move left, right, up, and down, and with a 30\% probability the action results in a random motion.
+We sampled 5 demonstrations with a value iteration supervisor and applied IRL with linear and quadratic rewards. These results are visualized in (Figure \ref{concept:1}b-c).
+These plots illustrate how IRL can be used to shape a reward function, by changing the reward parametrization. Even though the underlying reward function is a sparse 1/0 reward,  MaxEnt fits a linear or a quadratic reward function, which is smoother. These smoother reward functions can help guide the agent to the goal.
 
 \begin{figure}[t]
 \centering
- \includegraphics[width=0.8\columnwidth]{exp/wafr-gridword-1.png}
- \caption{GridWorld: the two goal states must be reached in sequence to receive a reward. RL algorithms find an optimal stationary policy, i.e., a time-invariant function between states and actions. In this case, Q-Learning fails to find a successful policy since a non-stationary decision is required (go right if in stage 1 of the task, go left if in stage 2). \hirl addresses this problem by segmenting the task and applying RL with an augemented state-space.\label{exp:gweasy1}}
+ \includegraphics[width=0.48\columnwidth]{concept/1.png}
+  \includegraphics[width=0.48\columnwidth]{concept/2.png}
+ \caption{(A) Tabular Q-Learning converges nearly 8x faster when the reward is quadratically shaped by IRL. (B) These benefits are even more pronounced when the Q function is approximated by a linear regression model. \label{concept:2}}
 \end{figure}
-\fi
 
-\subsection{Parallel Parking}\label{exp:pp}
+If we were to compare the convergence of RL on the 1/0 reward and the quadratic reward, we find vastly different convergence properties.
+We use a tabular Q-Learning agent with an $\epsilon$-greedy exploration policy ($\epsilon=0.1$).
+Q-Learning on the quadratic reward converges in nearly 8x fewer steps than the 1/0 reward (Figure \ref{concept:2}a).
+This is because the Q-Learning agent with the shaped reward function observes a reward earlier than the 0/1 agent, and thus, it is able to make progress towards the goal earlier in the learning process.
+Combining function approximation with Q-Learning allows it to generalize to nearby unseen states.
+The effects are even more pronounced since now once the agent observes the ``right direction'' to travel due to the shaped reward it is able to quickly make progress (Figure \ref{concept:2}b).
+In the following experiments, we will use the term \textsf{IRL} to refer to the combined IRL+RL policy inference procedure.
+
+\begin{figure}[t]
+\centering
+ \includegraphics[width=0.48\columnwidth]{concept/3.png}
+  \includegraphics[width=0.48\columnwidth]{concept/4.png}
+ \caption{(A) Given 5 expert demonstrations, Behavioral Cloning with a Random Forest classifier achieves a high reward on the same task. This can be used to initialize the Q-Learning agents. On the same task there is a marginal benefit to IRL. (B) We perturb the task after collecting 5 demonstrations by adding an obstacle blocking the shortest path, and find that the IRL agent is the most effective.  \label{concept:3}}
+\end{figure}
+
+One could hand-craft such reward functions, but one advantage of IRL is that it learns such functions from demonstration data. Admittedly, the previous comparison with RL is not completely fair. The RL algorithm with the 1/0 reward does not use the demonstration data. In principle, one could train a policy with Behavioral Cloning and use that to initialize the RL agent. Given the same 5 initial demonstrations, we train a random forest classifier.
+When we apply this policy to the same task instance where the demonstrations were collected, the behavioral cloning policy does very well (Figure \ref{concept:3}a).
+This can be used as an initialization to the Q-learning agent, which can further improve the policy.
+On the same task instance, there is a marginal benefit to using IRL to shape the reward--as the behavioral cloning policy already gets the agent very close to the goal in most cases.
+
+However, suppose that demonstration domain slightly differs from the execution domain. We simulate this by adding a 4x4 obstacle in the center of the GridWorld map.
+Now, the learned behavioral cloning policy is not effective on the new domain (Figure \ref{concept:3}b).
+However, the reward function learned with IRL transfers more robustly.
+Furthermore, combining the IRL with a BC initialization improves performance over RL by 6x.
+These results motivate us to consider how to use demonstrations to improve the convergence of RL.
+In more complex tasks, a quadratic approximation of the reward may not suffice.
+Hence, we consider how to segment the task into sub-tasks that can be approximated with a quadratic reward.
+
+
+\begin{figure}[t]
+\centering
+ \includegraphics[width=\columnwidth]{concept/swirl-rewards.png}
+ \caption{(A) A GridWorld domain with an obstacle, (B) Visualization of the reward function if we apply IRL to 5 demonstrations and fit a quadratic reward. The quadratic reward can encourage the agent to get ``stuck'' in the obstacle if it is too greedy, (C) Segmented quadratic reward function learned with \hirl. The function has two components first guiding the agent to the passage on the left, and then guiding to the goal.  \label{concept:4}}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+ \includegraphics[width=0.6\columnwidth]{concept/2-1.png}
+ \caption{\hirl converges faster than a single quadratic reward or the 1-0 reward. \label{concept:5}}
+\end{figure}
+
+
+\vspace{0.5em} \noindent \textbf{Hypothesis 0. IRL Can Benefit From Segmentation: } Now, we make the domain above slightly more complicated. We add an obstacle in such a way that the straight-line path is no longer optimal (Figure \ref{concept:4}a). As before, we sample 5 demonstrations from a value iteration supervisor.
+Qualitatively, the quadratic reward learned from IRL is misleading as it can guide an overly greedy agent into the obstacle(Figure \ref{concept:4}b). 
+\hirl learns a two-segment reward, where first it guides the agent to a point in the left passage and then a reward around the goal (Figure \ref{concept:4}c).
+The number of segments was determined by a Dirichlet process prior as described in the text.
+
+To evaluate \hirl quantitatively, we use a tabular Q-learning agent to learn a policy using these rewards.
+To control for initialization effects, the agents were initialized randomly (unlike the previous experiment) and used an $\epsilon=0.1$ exploration policy.
+This results in a significant improvement in convergence as seen in Figure \label{concept:5}.
+
+\begin{figure}[t]
+\centering
+ \includegraphics[width=0.48\columnwidth]{concept/3-1.png}
+  \includegraphics[width=0.48\columnwidth]{concept/3-2.png}
+ \caption{(A) We measure the sensitivity to the number of initial demonstrations, (B) We perturb the execution environment by adding random obstacles. \label{concept:6}}
+\end{figure}
+
+\vspace{0.5em} \noindent \textbf{Parameter Sensitivity: } Finally, we use the previous GridWorld environment to illustrate the sensitivity to different parameters. In Figure \ref{concept:6}a, we vary the number of initial demonstrations provided to IRL and Behavioral Cloning and measure the performance after 1500 rollouts.
+IRL is not as sensitive to the number of demonstrations as BC.
+This is because the reward function that IRL is estimating is much simpler than policy function.
+Next, we evaluate each of the algorithms on their ability to generalize to different task instances.
+We perturb the execution environment by randomly adding single grid point obstacles.
+We average the results over 50 such random perturbations (Figure \ref{concept:6}b).
+
+Not surprisingly, we find that IRL is the most robust.
+\hirl is relatively robust but is slightly worse than IRL for a large number of random obstacles.
+We wanted to understand why \hirl was less robust than standard IRL, so we manually set the number of segments in \hirl to $4$.
+The performance of \hirl with 4 segments is much worse.
+This is because obstacles can ``invalidate'' segments.
+This suggests an interesting tradeoff where more segments can serve to more precisely guide the agent towards the goal, but less segments lead to improved generalization.
+
+\subsection{Simulated Control Domains}
+Next, we describe \hirl on simulated control domains. These illustrate examples with continuous state-spaces.
+
+\subsubsection{Parallel Parking}\label{exp:pp}
 We constructed a parallel parking scenario for a robot with non-holonomic dynamics and two obstacles. The robot can control its speed ($\|\dot{x}\|+\|\dot{y}\|$) and heading ($\theta$), and observe its x position, y position, orientation, and speed in a global coordinate frame.
 If the robot parks between the obstacles, i.e., 0 velocity within a $15^\circ$ tolerance, the task is a success and the robot receives a reward of $1$. 
 The robot's dynamics are noisy and with probability 0.1 will randomly add or subtract $5^\circ$ degrees from the steering angle.
@@ -80,8 +120,6 @@ We call this domain Parallel Parking with Partial Observation (PP-PO).
 We generated 5 demonstrations using an RRT motion planner (assuming deterministic dynamics) and applied \hirl to learn the segments.
 Figure \ref{exp:rcsegmentation} illustrates the demonstrations and the learned segments. There are two intermediate goals corresponding to positioning the car and orienting the car correctly before reversing.
 
-
-\subsubsection{Performance}\label{exp:ppc} 
 In the fully observed problem, compared to MaxEnt-IRL, the model-based \hirl converges to a policy with a 60\% success rate with about 3x fewer time-steps.
 The gains for the model-free version are more modest with a 50\% reduction.
 The supervised policy learning approach achieves a success rate of 47\% and the baseline RL approach achieves a success rate of 36\% after 250000 time-steps.
@@ -107,44 +145,54 @@ The model-free \hirl algorithm converges more slowly; requiring 20\% more time-s
 
 \begin{figure}[t]
 \centering
- \includegraphics[width=0.8\columnwidth]{exp/rc-car-segmentation.png}
+ \includegraphics[width=\columnwidth]{exp/rc-car-segmentation.png}
  \caption{This plot illustrates (left) the 5 demonstration trajectories for the parallel parking task, and (right) the sub-goals learned by \hirl. \label{exp:rcsegmentation}}
 \end{figure}
 
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
- \includegraphics[width=\columnwidth]{exp/rc-convergence-1.png}
+ \includegraphics[width=0.8\textwidth]{exp/rc-convergence-1.png}
  \caption{Performance on a parallel parking task with noisy dynamics with full state observations (position, orientation, and velocity), partial observation (only position and orientation), and transfer (randomly permuting the action space).
  Success is measured in terms of the probability that the car successfully parked, and (M) denotes whether the approach used the dynamics model.
  In the fully observed case, both the model-based and model-free \hirl algorithms converge faster than MaxEnt-IRL and quickly outperforms the SVM.
  In the partially observed case, MaxEnt-IRL, Q-Learning, and the SVM fail--while \hirl succeeds.
  Both techniques also demonstrate comparable transferability to MaxEnt-IRL when the domain's dynamics are perturbed.
 \label{exp:rcsegmentation-res}}
-\end{figure}
+\end{figure*}
 
 
 
-
-\iffalse
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
- \includegraphics[width=\textwidth]{exp/segmentation-acrobot-segments.png}
- \caption{We apply \hirl to segment 5 demonstrations of Acrobot trajectories. We visualize the segments, and we find that these provide sub-goals for the robot to reach the threshold.\label{exp:acroseg} \todo{this figure isnt as useful as we would like it to be}}
-\end{figure}
-\fi
-
-
-\begin{figure}[t]
-\centering
- \includegraphics[width=\columnwidth]{exp/acr-convergence-1.png}
+ \includegraphics[width=0.8\textwidth]{exp/acr-convergence-1.png}
  \caption{Acrobot: We measured the performance of rewards constructed with \hirl and the alternatives. We find that \hirl (model-based and model-free) converges faster than MaxEnt-IRL, Q-Learning, and the SVM.
  Furthermore, \hirl requires less demonstrations, which we measure by comparing the performance of the alternatives after a fixed 50000 time-steps and with varied input demonstrations. 
  We also vary the task parameters by changing the size of the second link of the pendulum and find that the learned rewards are robust to this variation (as before comparing the performance of the alternatives after a fixed 50000 time steps). MaxEnt-IRL shows improved transfer performance since once the task has changed enough the segments learned during the demonstrations may not be informative and may even hurt performance if they are misleading. 
  \label{exp:acsegmentation-res2}}
+\end{figure*}
+
+\begin{figure}[t]
+\centering
+    \includegraphics[width=0.8\columnwidth]{exp/IMAG0249.jpg}
+    \caption{The experimental setup for gauze grasping and tensioning. The task is to grasp the gauze and lift it to flatten it out. This task is not usually successful in an open-loop trajectory due to deformation after the grasp.
+    }
+    \label{exp:dvrk2}
+% \vspace{-15pt}
 \end{figure}
 
-\subsection{Acrobot}\label{exp:acrobot}
+\begin{figure}[t]
+
+    \includegraphics[width=\columnwidth]{exp/signals.png}
+    \raggedright
+    \includegraphics[width=0.9\columnwidth]{exp/segmentation.png}
+    \caption{A representative demonstration of the deformable sheet grasping task with relevant features plotted over time. \hirl identifies 4 segments when applied to the deformable sheet grasping task. 
+    }
+    \label{exp:dvrk3}
+% \vspace{-15pt}
+\end{figure}
+
+\subsubsection{Acrobot}\label{exp:acrobot}
 This domain consists of a two-link pendulum with gravity and with torque controls on the joint. The dynamics are noisy and there are limits on the applied torque. The robot has 1000 timesteps to raise the arm above horizontal ($y=1$ in the images). If the task is successful and the robot receives a reward of $1$. 
 Thus, the expected reward is equivalent to the probability that the current policy will successfully raise the arm above horizontal.
 We generated $N=5$ demonstrations for the Acrobot task and applied segmentation. 
@@ -165,45 +213,57 @@ We learn the rewards on the standard pendulum, and then during learning we vary 
 We plot the success rate (after a fixed 50000 steps) as a function of the increase link size.
 \hirl is significantly more robust than supervised policy learning to the increase in link size and has a significantly higher success rate than IRL for small perturbations in link size. 
 
-\subsection{Summary of Simulated Experiments}
-Table \ref{tab:my_label} summarizes the results of our experiments in terms of convergence rate and maximum attained reward on the Parallel Parking domain (with and without partial observation), Acrobot domain, and additional experiments using variants of GridWorld.
-GridWorld is a two-room map where the robot has to reach two target states in sequence to get the full reward.
-GridWorld-2 is a substantially harder map with ``pits'' (i.e., instant failure if reached).
-The Two-Bridges domain is another GridWorld based environment in which there is a short ``unsafe'' path between start and goal and a longer ``safe'' path (which is actually the optimal solution). Please refer to the arXiv report\,\cite{krishnan2016hirl} for more details.
-
-\begin{table*}[ht]
-\footnotesize
-    \centering
-    \caption{This table summarizes the convergence rate (\textbf{AUC}) and max reward (\textbf{MAX}) attained by a Q-learning robot using the alternatives after a fixed number of iterations. 
-    \label{tab:my_label}}
-    \resizebox{\linewidth}{!}{% put in textwidth
-    \begin{tabular}{r||r|r|r|r|r|r|r|r|r|r|r|r}
-    \hline
-        \rowcolor[HTML]{CBCEFB}
-         &  \multicolumn{2}{c|}{GridWorld}&
-         \multicolumn{2}{c|}{GridWorld-2}& \multicolumn{2}{c|}{Two-Bridges} & %\multicolumn{2}{c|}{MW}&
-         \multicolumn{2}{c|}{PP(FO)}
-         & \multicolumn{2}{c|}{PP(PO)}& \multicolumn{2}{c}{Acrobot} \\ %\multicolumn{2}{c|}{Pinball}\\
-    \hline
-       & Max & AUC & Max & AUC & Max & AUC & Max & AUC & Max & AUC & Max & AUC\\
-    \hline  \hline
-        \rowcolor[HTML]{E0E0E0}
-        Q-Learning & $0.984$ & $10.976$ &$0.861$  & $15.440$& $1.090$ & $16.270$& $0.911$ &$109.76$ & $0.311$ &$27.419$ & $0.944$ &$3.447$\\
-%    \hline
-%        Sliding & $0.322$ & $-4.322$ & $-0.190$ & $-6.200$ & $1.672$ & $18.312$ & $0.764$ &$69.664$ & $0.464$ &$51.103$ & $0.931$ &$2.214$\\
-        MaxEnt-IRL & $0.987$ & $299.556$ & $0.861$ & $16.956$ & $0.759$ & $16.270$ & $0.950$ &$299.556$ & $0.444$ &$33.128$ & $0.920$ &$44.111$\\
-        \rowcolor[HTML]{E0E0E0}
-        \hirl (MF) & $1.830$  & $322.125$ & $1.764$ & $14.070$ & $\mathbf{1.751}$& $\mathbf{18.953}$ & $\mathbf{0.991}$ &$164.127$ & $0.934$ &$123.115$ & $0.906$ &$20.935$\\
-        
-        \hirl (MB) & $\mathbf{1.835}$ & $\mathbf{514.113}$ & $\mathbf{1.827}$ & $\mathbf{28.632}$ & $1.577$ & $17.141$ & $0.965$ & $\mathbf{514.113}$ & $\mathbf{0.958}$ & $\mathbf{333.897}$ & $\textbf{0.987}$ &$\textbf{65.512}$\\
-    \hline
-    \end{tabular}
-    }
-\end{table*}
-\vspace{-10pt}
-
 \subsection{Physical Experiments with the da Vinci Surgical Robot}
-In physical experiments, we apply \hirl to learn to cut along a marked line in gauze similar to Murali et al.~\cite{murali2015learning}.
+
+
+\subsubsection{Deformable Sheet Grasping and Tensioning: } Next, we apply \hirl to learn to how to grasp and tension a sheet of gauze. The experimental setup is pictured in Figure \ref{exp:dvrk2}. The basic setup is a sheet of gauze fixtured at the two far corners. The robot's task to the grasp the gauze on the opposing side, lift it up, and in the process flatten the sheet out.
+This task is not usually successful in an open-loop trajectory due to deformation after the grasp.
+Some grasps pick up more or less of the material and the flattening procedure has to be accordingly modified.
+The state-space is the 6 DoF end-effector position of the robot, the current load on the wrist of the robot, and a visual feature measuring the differences in disparity markers on the sheet (a proxy for flatness).
+The action space is discretized into an 8 dimensional vector ($\pm x$, $\pm y$, $\pm z$, open/close gripper) where the robot moves in 2mm increments.
+
+We provided 15 demonstrations through a keyboard based tele-operation interface.
+From these 15 demonstrations, \hirl identifies four segments. Figure \ref{exp:dvrk3} illustrates the segmentation of a representative demonstration with important states plotted over time.
+In this problem, we applied both the model-based and model-free versions of \hirl to construct the rewards.
+One of the segments corresponds to moving to the correct grasping position, one corresponds to making the grasp, one lifting the gauze up again, and one corresponds to straightening the gauze.
+
+We can use the reward functions learned by \hirl to refine the policy for this task.
+We define a Q-Network with a single-layer Multi-Layer Perceptron with 32 hidden units.
+For each of the segments, we apply Behavioral Cloning locally with the same architecture as the Q-network (with an additional softmax over the output layer) to get an initial policy. We rollout 100 trials with an $\epsilon=0.1$ greedy version of these segmented policies.
+The learning results of this experiment are summarized below with different variations of the learning algorithms.
+The value of the policy is a measure of average disparity over the gauze accumulated over the task (if the gauze is flatter longer, then the value is greater).
+As a baseline, we applied RL for 100 rollouts with no other information. RL did not successfully grasp the gauze even once.
+Next, we applied behavioral cloning (BC) directly.
+BC was only able to reach the gauze and distrub it but not succesfully grasping.
+Then, we applied the segmentation from \hirl  and applied BC directly to each local segment (without further refinement). 
+This was able complete the full task.
+Finally, we applied all of \hirl and found the highest-value results.
+For comparison, we applied \hirl without the BC initialization and found that it was only successful at the first two steps.
+
+% Please add the following required packages to your document preamble:
+% \usepackage[table,xcdraw]{xcolor}
+% If you use beamer only pass "xcolor=table" option, i.e. \documentclass[xcolor=table]{beamer}
+\begin{table}[]
+\centering
+\scriptsize
+\caption{Results from the deformable sheet grasping experiment}
+\label{my-label}
+\begin{tabular}{llll}
+\rowcolor[HTML]{000000} 
+{\color[HTML]{FFFFFF} Technique} & {\color[HTML]{FFFFFF} \# Demonstrations} & {\color[HTML]{FFFFFF} \# Rollouts} & {\color[HTML]{FFFFFF} Value} \\
+RL (ab initio)                   & -                                        & 100                                & -8210                        \\
+BC                               & 15                                       & -                                  & -7591                        \\
+Segmentation+BC                  & 15                                       & -                                  & -3516                        \\
+SWIRL+MF (no init)                  & 15                                       & 100                                & -6128                        \\
+SWIRL+MB (no init)                  & 15                                       & 100                                & -5798                        \\
+\textbf{SWIRL+MF (BC init)}                  & 15                                       & 100                                & \textbf{-3110}     \\
+\textbf{SWIRL+MB (BC init)}                  & 15                                       & 100                                & \textbf{-2241}                       
+\end{tabular}
+\end{table}
+
+\subsubsection{Surgical Line Cutting: }
+In the next experiment, we evaluate generalization to different task instances.
+We apply \hirl to learn to cut along a marked line in gauze similar to Murali et al.~\cite{murali2015learning}.
 This is a multi-step problem where the robot starts from a random initial state, has to move to a position that allows it to start the cut, and then cut along the marked line.
 We provide the robot 5 kinesthetic demonstrations by positioning the end-effector and then following various marked straight lines.
 The state-space of the robot included the end-effector position $(x,y)$ as well as a visual feature indicating its pixel distance to the marked line $(pix)$.
@@ -211,10 +271,10 @@ This visual feature is constructed using OpenCV thresholding for the black line.
 Since the gauze is planar, the robot's actions are unit steps in the $\pm x, \pm y$ axes.
 Figure\,\ref{exp:dvrk1} illustrates the training and test scenarios.
 
-As expected, the algorithm identifies two consistent changes in local linearity corresponding to the positioning step and the termination.
+\hirl identifies two segments corresponding to the positioning step and the termination.
 The learned reward function for the position step minimizes $x,y,pix$ distance to the starting point and for the cutting step the reward function is more heavily weighted to minimize the $pix$ distance.
 We defined task success as positioning within $1$\,cm of the starting position of the line and during the following stage, missing the line by no more than $1$\,cm (estimated from pixel distance).
-Since we did not have a dynamics model, we evaluated the model-free version of \hirl, Q-Learning, and the SVM.
+We evaluated the model-free version of \hirl, Q-Learning, and Behavioral Cloning with an SVM.
 \hirl was the only technique able to achieve the combined task.
 This is because the policy for this task is non-stationary, and \hirl is the only approach of the alternatives that can learn such a policy.
 
@@ -223,7 +283,6 @@ We ran trials on different sequences of curves and straight lines.
 Out of the 15 trials, 11 were successful.
 2 failed due to \hirl errors (tracking or position was imprecise) and 2 failed due to cutting errors (gauze deformed causing the task to fail).
 1 of the failures was on the 4.5 cm curvature line and 3 were one the 3.5 cm curvature line.
-
 
 % \begin{figure}[t]
 % \centering
@@ -242,10 +301,8 @@ Out of the 15 trials, 11 were successful.
 
 
 \begin{figure}[t]
-\vspace{-10pt}
 \centering
-    \includegraphics[width=\textwidth]{exp/dvrk-demo-2.png}
-    \vspace{-10pt}
+    \includegraphics[width=\columnwidth]{exp/dvrk-demo-2.png}
     \caption{
       We collected demonstrations on the da Vinci surgical robot kinesthetically. The task was to cut a marked line on gauze. We demonstrated the location of the line without actually cutting it. The goal is to infer that the demonstrator's reward function has two steps: position at a start position before the line, and then following the line. We applied this same reward to curved lines that started in different positions.
     }
@@ -253,12 +310,10 @@ Out of the 15 trials, 11 were successful.
 % \vspace{-15pt}
 \end{figure}
 
-\begin{table}[ht]
-   \scriptsize
+\begin{table*}[ht]
     \centering
     \caption{With 5 kinesthetic demonstrations of following marked straight lines on gauze, we applied \hirl to learn to follow lines of various curvature. After 25 episodes of exploration, we evaluated the policies on the ability to position in the correct cutting location and track the line. We compare to SVM on each individual segment. SVM is comparably accurate on the straight line (training set) but does not generalize well to the curved lines.
     \label{dvrk:res1}}
-    \vspace{-5pt}
     \resizebox{\linewidth}{!}{% put in textwidth
     \begin{tabular}{c||c|c|c|c}
     \hline
@@ -279,9 +334,7 @@ Out of the 15 trials, 11 were successful.
     \end{tabular}
     }
     % \vspace{-10pt}
-\end{table}
-\vspace{-10pt}
-
+\end{table*}
 
 Next, we characterized the repeatability of the learned policy.
 We applied \hirl to lines of various curvature spanning from straight lines to a curvature radius of 1.5 cm.
@@ -289,4 +342,5 @@ Table \ref{dvrk:res1} summarizes the results on lines of various curvature.
 While the SVM approach did not work on the combined task, we evaluated its accuracy on each individual step to illustrate the benefits of \hirl.
 On following straight lines, SVM was comparable to \hirl in terms of accuracy.
 However, as the lines become increasingly curved, \hirl generalizes more robustly than the SVM.
+
 
