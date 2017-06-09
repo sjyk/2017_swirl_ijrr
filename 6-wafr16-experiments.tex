@@ -40,179 +40,210 @@ The learned reward functions and transition regions are used in the policy learn
 
 \vspace{0.5em}
 
-\subsubsection{Fixed Demonstrations, Vary Rollouts}
-In the first experiment, we fix number of initial demonstrations $N=5$, and vary the number of rollouts.
+\begin{figure}[t]
+\centering
+ \includegraphics[width=\columnwidth]{new-exp/pp-fo.png}
+ \caption{For a fixed number of demonstrations $5$, we vary the number of rollouts and measure the average reward at each rollout. (QL) denotes Q-learning, (SVM) denotes a baseline of behavioral cloning with a SVM policy representation, (IRL-E) denotes MaxEnt-IRL with estimated dynamics, (IRL-G) denotes MaxEnt-IRL with ground truth dynamics, (SWIRL-E) denotes SWIRL with local MaxEnt-IRL and estimated dynamics, (SWIRL-G) denotes SWIRL with local MaxEnt-IRL and ground truth dynamics, and (SWIRL-MF) denotes the model-free version of SWIRL. SWIRL achieves the same reward as QL with 15\% of the rollouts, and the same reward as IRL with 66\% of the rollouts. \label{exp:pp-fo1}}
+\end{figure}
 
+\subsubsection{Fixed Demonstrations, Vary Rollouts}
+In the first experiment, we fix number of initial demonstrations $N=5$, and vary the number of rollouts (Figure \ref{exp:pp-fo1}).
+The basline line Q-Learning approach (QL) is very slow, because it relies on random exploration to achieve the goal at least once before it can start estimating the value of states and actions.
+However, given enough exploration (1250 rollouts), Q-Learning converges to a solution with a 95\% success rate.
+In this problem, there will always be some failure cases to the noise in the system.
+We collect 5 demonstrations and directly learn a policy with an SVM.
+This policy has a very poor success rate of 13\%.
+Q-Learning and the SVM define two extremes, no demonstrations and no rollouts, respectively.
+
+Next, we consider combinations of rollouts and demonstrations.
+We apply MaxEnt-IRL to the 5 demonstrations and learn reward functions.
+Since the MaxEnt-IRL inference procedure requires a dynamics model, we consider two variants: (1) estimate the dynamics from the demonstrations, and (2) use the known dynamics model of the car directly.
+We found that both IRL methods surpassed the SVM policy after only 250 rollouts, and attained the same final reward as Q-Learning in 250 less rollouts.
+Surprisingly, we found that there was little difference between using the estimated dynamics model and the ground truth model.
+
+Finally, we considered three variants of \hirl. (SWIRL-E) is SWIRL with local MaxEnt-IRL and estimated dynamics, (SWIRL-G) is SWIRL with local MaxEnt-IRL and ground truth dynamics, and (SWIRL-MF) denotes the model-free version of SWIRL.
+SWIRL achieves the same reward as QL with 15\% of the rollouts, and the same reward as IRL with 66\% of the rollouts.
+\hirl learns three segments for this task (Figure~\ref{exp:rcsegmentation}), and places quadratic rewards that guide the car to each of these segments.
+There are two intermediate goals corresponding to positioning the car and orienting the car correctly before reversing.
+With a single quadratic reward (as in IRL), the car has to learn to make a sequence of actions that move away from the goal (pulling up). In the segmented problem, the car can always move monotonically towards each of the goals.
+
+
+\begin{figure}[t]
+\centering
+ \includegraphics[width=\columnwidth]{new-exp/pp-fo2.png}
+ \caption{For a number of rollouts $500$, we vary the number of demonstration trajectories given to each technique. (QL) denotes Q-learning, (SVM) denotes a baseline of behavioral cloning with a SVM policy representation, (IRL-E) denotes MaxEnt-IRL with estimated dynamics, (IRL-G) denotes MaxEnt-IRL with ground truth dynamics, (SWIRL-E) denotes SWIRL with local MaxEnt-IRL and estimated dynamics, (SWIRL-G) denotes SWIRL with local MaxEnt-IRL and ground truth dynamics, and (SWIRL-MF) denotes the model-free version of SWIRL. SWIRL is less senstive to the number of demonstrations observed than the SVM. With only 5 demonstrations, SWIRL is within 10\% of its reward if it observed 100 demonstrations. \label{exp:pp-fo2}}
+\end{figure}
 
 \subsubsection{Fixed Rollouts, Vary Demonstrations}
-Next, we fix the number of rollouts to $1250$, and vary the number of demonstration trajectories each approach observes.
-In the fully observed problem, compared to MaxEnt-IRL, the model-based \hirl converges to a policy with a 60\% success rate with about 3x fewer time-steps.
-The gains for the model-free version are more modest with a 50\% reduction.
-The supervised policy learning approach achieves a success rate of 47\% and the baseline RL approach achieves a success rate of 36\% after 250000 time-steps.
+Next, we fix the number of rollouts to $500$, and vary the number of demonstration trajectories each approach observes.
+The basline line Q-Learning approach (QL) takes no demonstrations and has a success rate of 17\% after 500 rollouts.
+The behavioral cloning approach (SVM) is sensitive to the number of demonstrations it observes. 
+For 5 demonstrations, it acheives a success rate of only 13\%.
+But if it observes 100 demonstrations it can achieve nearly the maximum 95\% success rate.
 
-The baseline Q-Learning approach directly tries to learn a sequence of actions to minimize the quadratic cost around the target state. 
-This leads to a lot of exploration since the robot must first make ``negative'' progress (pulling forward). 
-\hirl improves convergence since it structures the exploration through the segmentation.
-The local reward functions are better shaped to guide the car towards its short term goal.
-This focuses the exploration on solving the short term problem first.
-MaxEnt-IRL mitigates some of the problems since it rewards states based on their estimated cost-to-go, but as the time-horizon increases the estimates of this become nosier--leading to worse performance (see technical report for a characterization~\cite{krishnan2016hirl}).
+On the other hand, the IRL approaches and SWIRL are comparatively less sensitive--where they perform nearly as well with a small number of demonstrations as they do with a larger dataset.
+With only 5 demonstrations, SWIRL is within 10\% of its reward if it observed 100 demonstrations.
+In this task the policy is more complex than the reward function, which is just a quadratic.
+It potentially requires much less data to estimate a quadratic function.
+
+The SVM approach does have the advantage that it doesn't require any further exploration.
+However, SWIRL and the SVM approach are not mutually exclusive. 
+As we show in our physical experiments, we can initialize Q-learning with a behavioral cloning policy. 
+The combination of the two approaches allows us to take advantage of a small number of demonstrations and learn to refine the initial policy through exploration.
+
+
+\begin{figure}[t]
+\centering
+ \includegraphics[width=\columnwidth]{new-exp/pp-fo3.png}
+ \caption{For $500$ rollouts  and $100$ demonstrations, we measure the robustness of the approaches to changes in the execution dynamics. (QL) denotes Q-learning, (SVM) denotes a baseline of behavioral cloning with a SVM policy representation, (IRL-E) denotes MaxEnt-IRL with estimated dynamics, (IRL-G) denotes MaxEnt-IRL with ground truth dynamics, (SL-E) denotes SWIRL with local MaxEnt-IRL and estimated dynamics, (SL-G) denotes SWIRL with local MaxEnt-IRL and ground truth dynamics, and (SL-MF) denotes the model-free version of SWIRL. While the SVM is 95\% successful on the original domain, its success does not transfer to the perturbed setting. On the other hand, SWIRL learns rewards and segments that transfer to the new dynamics since they are state-space goals. \label{exp:pp-fo3}}
+\end{figure}
+
+\subsubsection{Varying Task Parameters}
+We also explored how well the approaches handle transfer if the dynamics change between demonstration and execution.
+We collect demonstrations $N=100$ on the original task, and then used the learned rewards or policies on a perturbed task.
+In the perturbed task, the system dynamics are coupled in a way that turining right causes the car to accelerate forward by $0.05$ meters per second.
+So in the perturbed task the car must learn to adjust to this acceleration during the reversing phase.
+In the new domain, each approach is allowed $500$ rollouts. 
+We report the results (Figure \ref{exp:pp-fo3}).
+
+The success rate of the policy learned with Q-Learning is more or less constant between the two domains.
+This is because Q-learning does not use any information from the original domain.
+The SVM behavioral cloning policy has a drastic change.
+On the original domain with a 100 demonstrations it acheives a 95\% success rate, however, on the perturbed domain it is never successful.
+This is becauce the SVM learned a policy that causes it to crash into one of the obstacles in the perturbed environment.
+
+The IRL techniques are more robust during the transfer.
+This is because the rewards learned are quadratic functions of the state and do not enocde anything specific about the dynamics.
+Similarly, in SWIRL, the rewards and transition regions are invariant to the dynamics in this transfer problem.
+For SWIRL-E and SWIRL-G, there is only a drop of 5\% in the success rate.
+On the other hand, the model-free version of SWIRL reports a larger drop of 16\%.
+This is because the model-free version is not a true IRL algorithm and may enocde some aspects of the dynamics in the learned reward function.
+
+Coincidentally, this experiment also shows us how to construct a failure mode for \hirl.
+If the perturbation in the task is such that it ``invalidates'' a transition region, e.g., a new obstacle, then \hirl may not be able to learn to complete the task.
+However, the transition regions give us a formalism to detecting such problems during learning as we can keep track of which regions are possible to reach.
+
+
+\begin{figure}[t]
+\centering
+ \includegraphics[width=\columnwidth]{new-exp/pp-po.png}
+ \caption{We hid the velocity state from the robot, so the robot only sees $(x,y,\theta)$. For a fixed number of demonstrations $5$, we vary the number of rollouts and measure the average reward at each rollout. (QL) denotes Q-learning, (SVM) denotes a baseline of behavioral cloning with a SVM policy representation, (IRL-E) denotes MaxEnt-IRL with estimated dynamics, (IRL-G) denotes MaxEnt-IRL with ground truth dynamics, (SWIRL-E) denotes SWIRL with local MaxEnt-IRL and estimated dynamics, (SWIRL-G) denotes SWIRL with local MaxEnt-IRL and ground truth dynamics, and (SWIRL-MF) denotes the model-free version of SWIRL. SWIRL converges will the other approaches fail to reach a reliable success rate \label{exp:pp-po}}
+\end{figure}
+
+
+\subsubsection{Partially Observed Parallel Parking}
+Next, we made the Parallel Parking domain more difficult to illustrate the connection between segmentation and memory in RL. 
+We hid the velocity state from the robot, so the car only sees $(x,y,\theta)$. 
+As before, if the car collides with one of the obstacle or does not park in 200 timesteps the episode ends.
+We call this domain Parallel Parking with Partial Observation (PP-PO).
+
+This form of partial observation creates an interesting challenge.
+There is no longer a stationary policy that can achieve the reward.
+During the reversing phase of parallel parking, the car does not know that it is currently reversing.
+So there is ambiguity in that state whether to pull up or reverse.
+We will see that segmentation can help disambiguate the action in this state.
+
+As before, we generated 5 demonstrations using an RRT motion planner (assuming deterministic dynamics) and applied each of the approaches.
+The techniques that model this problem with a single MDP all fail to converge.
+The Q-Learning approach achieves some non-zero rewards by chance.
+The learned segments in \hirl help disambiguate dependence on history, since the segment indicator tells the car which stage of the task is currently active (pulling up or reversing)
+After 250000 time-steps, the policy learned with model-based \hirl has a 95\% success rate in comparison to a <10\% success rate for the baseline RL, 0\% for MaxEnt-IRL, and 0\% for the SVM.
+
+
+\begin{figure*}[t]
+\centering
+ \includegraphics[width=\textwidth]{exp/segmentation-acrobot-segments.png}
+ \caption{We plot the centroids of the learned segments in \hirl to visualize how \hirl is partitioning the task. Qualitatively, \hirl constructs evenly-spaced way points along the swing up trajectory.  \label{acr-segments}}}
+\end{figure*}
+
+
+\subsection{Acrobot}\label{exp:acrobot}
+This domain consists of an under-actuated two-link pendulum with gravity and with torque controls on the joint (Figure \ref{domains}b). 
+There are 4 discrete actions that correspond to clockwise and counter-clockwise torques on each of the links. 
+The robot observes the angle $\theta_1, \theta_2$ and angular velocity $\omega_1, \omega_2$ at each of the links.
+The dynamics are noisy where a small amount of random noise is added to each torque applied to the pendulum. 
+The robot has 1000 timesteps to raise the arm above horizontal ($y=1$ in the image). If the task is successful and the robot receives a reward of $1$. 
+The expected reward is equivalent to the probability that the current policy will successfully raise the arm above horizontal.
+
+This task is interesting because the underlying system is non-linear. 
+Many IRL algorithm require dynamics to estimate the reward and non-linearities may not have closed form solutions.
+In this experiment, we show that linearizing the dynamics based on the demonstrations is a reasonable idea in \hirl.
+Since we are fitting a piecewise reward, the system need only be locally linear.
+This coulped with a kernel transformation empirically gives segmented rewards that improve convergence.
+
+We considered the following baselines:
+
+\vspace{0.25em}\noindent \textbf{RL (Q-Learning): } The baseline approach is modeling the entire problem as an MDP with the sparse delayed reward. We apply Q-Learning to learn a policy for this problem with a radial basis function representation for the Q function with number of bases and bandwidth $k=25, \sigma=0.25$ respectively. The radial basis function hyper-parameters were tuned manually to achieve the fastest convergence in the experimental task. 
+
+\vspace{0.25em}\noindent \textbf{Behavioral Cloning (Kernel SVM): } We generated $N$ demonstrations using the Q-Learning baseline (i.e., run to convergence and sample from the learned policy). We use an RBF kernel SVM $\sigma=1e-5$  with L2 regularization $\alpha=5e-3$ to predict the action from the state. The hyper-parameters were tuned manually using cross-validation by holding out trajectories.
+
+\vspace{0.25em}\noindent \textbf{Single-Step IRL (MaxEnt-IRL): } We generated $N$ demonstrations using the Q-Learning baseline (i.e., run to convergence and sample from the learned policy). We use the collected demonstrations and infer a quadratic reward function using MaxEnt-IRL. In the acrobot, we only use estimated dynamics because the underlying system is non-linear. The estimated dynamics are a linearization. The learned reward function is optimized using Q-learning with a radial basis function representation with the same hyper-parameters as the RL approach. 
+
+\vspace{0.25em}\noindent \textbf{\hirl: } Finally, we apply \hirl to the $N$ demonstrations, learn segmentation, and quadratic rewards (Figure~\ref{exp:rcsegmentation}).
+We apply \hirl with a DP-GMM based segmentation step with a kernel transformation $\sigma = 0.1$ (as described in Section \ref{segm}).
+For the local IRL approach, we consider two approaches: MaxEnt with locally estimated dynamics, Model-Free. 
+The learned reward functions and transition regions are used in the policy learning phase with Q-learning with a radial basis function representation with the same hyper-parameters as the RL approach.
+
+
+\begin{figure}[t]
+\centering
+ \includegraphics[width=\columnwidth]{new-exp/exp-acr.png}
+ \caption{For a fixed number of demonstrations $5$, we vary the number of rollouts and measure the average reward at each rollout. (QL) denotes Q-learning, (KSVM) denotes a baseline of behavioral cloning with a Kernel SVM policy representation, (IRL) denotes MaxEnt-IRL using linearized dynamics learned from the demonstrations, (SWIRL) denotes SWIRL with local MaxEnt-IRL and estimated linear dynamics, and (SWIRL-MF) denotes the model-free version of SWIRL. SWIRL converges with 2000 fewer rollouts than Q-learning and IRL. \label{exp:acr}}
+\end{figure}
+
+
+\subsubsection{Fixed Demonstrations, Vary Rollouts}
+We generated $N=15$ demonstrations for the Acrobot task and compared the different approaches (Figure \ref{exp:acr}). 
+The baseline behavioral cloning policy with a kernel svm failed to succeed.
+Q-learning required 5000 rollouts to acheive a policy that was successful 100\% of the time.
+IRL did not converge significantly faster than Q-Learning.
+This is because it models the reward function as a single quadratic, but there are multiple steps required to swing the pendulum up.
+The single quadratic potentially misleads learner in early episodes.
+
+Finally, we see that SWIRL converges with 2000 fewer rollouts than Q-learning and IRL.
+The model-free method converges with 1000 more rollouts.
+This experiment suggests that \hirl is applicable to certain types of non-linear systems.
+We defer a more formal study of this problem to future work. 
+
+
+\begin{figure}[t]
+\centering
+ \includegraphics[width=\columnwidth]{new-exp/acr2.png}
+ \caption{For a number of rollouts $3000$, we vary the number of demonstration trajectories given to each technique. QL) denotes Q-learning, (KSVM) denotes a baseline of behavioral cloning with a Kernel SVM policy representation, (IRL) denotes MaxEnt-IRL using linearized dynamics learned from the demonstrations, (SWIRL) denotes SWIRL with local MaxEnt-IRL and estimated linear dynamics, and (SWIRL-MF) denotes the model-free version of SWIRL. SWIRL is less senstive to the number of demonstrations observed than the SVM. With only 15 demonstrations, SWIRL is able to achieve the maximum reward. In comparison, the SVM requires 250 demonstrations. \label{exp:acr2}}
+\end{figure}
+
+
+\subsubsection{Vary Demonstrations, Fixed Rollouts}
+Next, we fix the number of rollouts to $3000$, and vary the number of demonstration trajectories each approach observes (Figure \ref{exp:acr2}).
+This task is substantially harder to learn than the parallel parking task.
+More demonstration data is required to learn the segments, rewards, and policies.
+The basline line Q-Learning approach (QL) takes no demonstrations and has a success rate of 58\% after 3000 rollouts.
+As before, the behavioral cloning approach (KSVM) is sensitive to the number of demonstrations it observes. 
+For 50 demonstrations, it acheives a success rate of 0\%.
+It requires 250 demonstrations to have a 100\% success rate.
+Again, the IRL approaches and SWIRL are less sensitive--where they perform nearly as well with a small number of demonstrations as they do with a larger dataset.
+With only 15 demonstrations, SWIRL is able to achieve the maximum reward.
+
+
+\begin{figure}[t]
+\centering
+ \includegraphics[width=\columnwidth]{new-exp/acr2.png}
+ \caption{For a number of rollouts $3000$ and $250$ demonstrations, we measure the transfer as a function of varying the link size. (QL) denotes Q-learning, (KSVM) denotes a baseline of behavioral cloning with a Kernel SVM policy representation, (IRL) denotes MaxEnt-IRL using linearized dynamics learned from the demonstrations, (SWIRL) denotes SWIRL with local MaxEnt-IRL and estimated linear dynamics, and (SWIRL-MF) denotes the model-free version of SWIRL. The KSVM policy fails as soon the link size is changed. SWIRL is robust until the change becomes very large.  \label{exp:acr3}}
+\end{figure}
 
 
 \subsubsection{Vary Task Parameters}
-Finally, we explore how well the constructed rewards transfer if the dynamics are perturbed in the fully observed setting.
-We expect MaxEnt-IRL to transfer well because it learns a delayed reward, which tends to encode success conditions and not task-specific details.
-After constructing the rewards, we randomly perturbed the system dynamics by introducing a bias towards turning left.
-We find that the model-based \hirl technique transfers to this domain comparably to MaxEnt-IRL until the task is so different that the sub-goals learned with \hirl are no longer informative.
-The model-free \hirl algorithm converges more slowly; requiring 20\% more time-steps to converge to the same success rate. 
+As in the parallel parking scenario, we evaluate how the different approaches handle transfer if the dynamics change between demonstration and execution.
+With $N=250$ demonstrations, we learn the rewards, policies, and segments on the standard pendulum, and then during learning, we vary the size of the second link in the pendulum.
+We plot the success rate (after a fixed 3000 rollouts) as a function of the increasing link size (Figure \ref{exp:acr3}).
+
+As the link size increases the even the basline Q-learning becomes less successful. This is because the system becomes more unstable and it is harder to learn a policy.
+The behavioral cloning SVM policy immediately fails as the link size is increased.
+IRL is more robust but does not offer much of an advantage in this problem.
+\hirl is robust until the change in the link size becomes large.
+This is because for the larger link size, \hirl might require different segments (or one of the learned segments in unreachable).
 
 
-
-\subsection{Partially Observed Parallel Parking}
-Next, we made the  Parallel Parking domain a little harder. We hid the velocity state from the robot, so the robot only sees $(x,y,\theta)$. As before, if the robot collides with one of the obstacle or does not park in 200 timesteps the episode ends.
-We call this domain Parallel Parking with Partial Observation (PP-PO).
-
-As before, we generated 5 demonstrations using an RRT motion planner (assuming deterministic dynamics) and applied \hirl to learn the segments.
-Figure \ref{exp:rcsegmentation} illustrates the demonstrations and the learned segments. 
-
-
-In the partial observation problem (PP-PO), there is no longer a stationary policy that can achieve the reward.
-The techniques that model this problem with a single MDP all fail to converge.
-The learned segments in \hirl help disambiguate dependence on history.
-After 250000 time-steps, the policy learned with model-based \hirl has a 70\% success rate in comparison to a <10\% success rate for the baseline RL, MaxEnt-IRL, and 0\% for the SVM.
-
-
-
-
-
-
-
-
-
-\begin{figure}[t]
-\centering
- \includegraphics[width=0.32\columnwidth]{concept/swirl1-rewards.png}
-  \includegraphics[width=0.32\columnwidth]{concept/swirl1-linear.png}
-   \includegraphics[width=0.32\columnwidth]{concept/swirl1-quadratic.png}
- \caption{This plot illustrates a conceptual GridWorld task. The green square denotes the starting position and the red denotes the target. The first plot shows the basic task, the second plot shows the reward learned with IRL from 5 demonstrations with a linear reward parametrization, and the second plot shows the reward learned with a quadratic parametrization. \label{concept:1}}
-\end{figure}
-
-\subsection{Conceptual Example: Discrete Planning}
-We start with a GridWorld example to illustrate the structure of tasks amenable to segmentation. 
-
-\vspace{0.5em} \noindent \textbf{Motivating Experiments: } Before we discuss segmentation, the first hypothesis that we have to evaluate is whether IRL on its own can improve the convergence of RL. This hypothesis is not unreasonable since some problem have a naturally sparse reward function (e.g., 1 if a goal state is reached, 0 else where), and IRL would approximate this reward with a smoother quadratic function. So consider an 16 x 16 GridWorld with a start position in one corner and a goal in another corner (Figure \ref{concept:1}a). 
-The agent can move left, right, up, and down, and with a 30\% probability the action results in a random motion.
-We sampled 5 demonstrations with a value iteration supervisor and applied IRL with linear and quadratic rewards. These results are visualized in (Figure \ref{concept:1}b-c).
-These plots illustrate how IRL can be used to shape a reward function, by changing the reward parametrization. Even though the underlying reward function is a sparse 1/0 reward,  MaxEnt fits a linear or a quadratic reward function, which is smoother. These smoother reward functions can help guide the agent to the goal.
-
-\begin{figure}[t]
-\centering
- \includegraphics[width=0.48\columnwidth]{concept/1.png}
-  \includegraphics[width=0.48\columnwidth]{concept/2.png}
- \caption{(A) Tabular Q-Learning converges nearly 8x faster when the reward is quadratically shaped by IRL. (B) These benefits are even more pronounced when the Q function is approximated by a linear regression model. \label{concept:2}}
-\end{figure}
-
-If we were to compare the convergence of RL on the 1/0 reward and the quadratic reward, we find vastly different convergence properties.
-We use a tabular Q-Learning agent with an $\epsilon$-greedy exploration policy ($\epsilon=0.1$).
-Q-Learning on the quadratic reward converges in nearly 8x fewer steps than the 1/0 reward (Figure \ref{concept:2}a).
-This is because the Q-Learning agent with the shaped reward function observes a reward earlier than the 0/1 agent, and thus, it is able to make progress towards the goal earlier in the learning process.
-Combining function approximation with Q-Learning allows it to generalize to nearby unseen states.
-The effects are even more pronounced since now once the agent observes the ``right direction'' to travel due to the shaped reward it is able to quickly make progress (Figure \ref{concept:2}b).
-In the following experiments, we will use the term \textsf{IRL} to refer to the combined IRL+RL policy inference procedure.
-
-\begin{figure}[t]
-\centering
- \includegraphics[width=0.48\columnwidth]{concept/3.png}
-  \includegraphics[width=0.48\columnwidth]{concept/4.png}
- \caption{(A) Given 5 expert demonstrations, Behavioral Cloning with a Random Forest classifier achieves a high reward on the same task. This can be used to initialize the Q-Learning agents. On the same task there is a marginal benefit to IRL. (B) We perturb the task after collecting 5 demonstrations by adding an obstacle blocking the shortest path, and find that the IRL agent is the most effective.  \label{concept:3}}
-\end{figure}
-
-One could hand-craft such reward functions, but one advantage of IRL is that it learns such functions from demonstration data. Admittedly, the previous comparison with RL is not completely fair. The RL algorithm with the 1/0 reward does not use the demonstration data. In principle, one could train a policy with Behavioral Cloning and use that to initialize the RL agent. Given the same 5 initial demonstrations, we train a random forest classifier.
-When we apply this policy to the same task instance where the demonstrations were collected, the behavioral cloning policy does very well (Figure \ref{concept:3}a).
-This can be used as an initialization to the Q-learning agent, which can further improve the policy.
-On the same task instance, there is a marginal benefit to using IRL to shape the reward--as the behavioral cloning policy already gets the agent very close to the goal in most cases.
-
-However, suppose that demonstration domain slightly differs from the execution domain. We simulate this by adding a 4x4 obstacle in the center of the GridWorld map.
-Now, the learned behavioral cloning policy is not effective on the new domain (Figure \ref{concept:3}b).
-However, the reward function learned with IRL transfers more robustly.
-Furthermore, combining the IRL with a BC initialization improves performance over RL by 6x.
-These results motivate us to consider how to use demonstrations to improve the convergence of RL.
-In more complex tasks, a quadratic approximation of the reward may not suffice.
-Hence, we consider how to segment the task into sub-tasks that can be approximated with a quadratic reward.
-
-
-\begin{figure}[t]
-\centering
- \includegraphics[width=\columnwidth]{concept/swirl-rewards.png}
- \caption{(A) A GridWorld domain with an obstacle, (B) Visualization of the reward function if we apply IRL to 5 demonstrations and fit a quadratic reward. The quadratic reward can encourage the agent to get ``stuck'' in the obstacle if it is too greedy, (C) Segmented quadratic reward function learned with \hirl. The function has two components first guiding the agent to the passage on the left, and then guiding to the goal.  \label{concept:4}}
-\end{figure}
-
-\begin{figure}[t]
-\centering
- \includegraphics[width=0.6\columnwidth]{concept/2-1.png}
- \caption{\hirl converges faster than a single quadratic reward or the 1-0 reward. \label{concept:5}}
-\end{figure}
-
-
-\vspace{0.5em} \noindent \textbf{Hypothesis 0. IRL Can Benefit From Segmentation: } Now, we make the domain above slightly more complicated. We add an obstacle in such a way that the straight-line path is no longer optimal (Figure \ref{concept:4}a). As before, we sample 5 demonstrations from a value iteration supervisor.
-Qualitatively, the quadratic reward learned from IRL is misleading as it can guide an overly greedy agent into the obstacle(Figure \ref{concept:4}b). 
-\hirl learns a two-segment reward, where first it guides the agent to a point in the left passage and then a reward around the goal (Figure \ref{concept:4}c).
-The number of segments was determined by a Dirichlet process prior as described in the text.
-
-To evaluate \hirl quantitatively, we use a tabular Q-learning agent to learn a policy using these rewards.
-To control for initialization effects, the agents were initialized randomly (unlike the previous experiment) and used an $\epsilon=0.1$ exploration policy.
-This results in a significant improvement in convergence as seen in Figure \label{concept:5}.
-
-\begin{figure}[t]
-\centering
- \includegraphics[width=0.48\columnwidth]{concept/3-1.png}
-  \includegraphics[width=0.48\columnwidth]{concept/3-2.png}
- \caption{(A) We measure the sensitivity to the number of initial demonstrations, (B) We perturb the execution environment by adding random obstacles. \label{concept:6}}
-\end{figure}
-
-\vspace{0.5em} \noindent \textbf{Parameter Sensitivity: } Finally, we use the previous GridWorld environment to illustrate the sensitivity to different parameters. In Figure \ref{concept:6}a, we vary the number of initial demonstrations provided to IRL and Behavioral Cloning and measure the performance after 1500 rollouts.
-IRL is not as sensitive to the number of demonstrations as BC.
-This is because the reward function that IRL is estimating is much simpler than policy function.
-Next, we evaluate each of the algorithms on their ability to generalize to different task instances.
-We perturb the execution environment by randomly adding single grid point obstacles.
-We average the results over 50 such random perturbations (Figure \ref{concept:6}b).
-
-Not surprisingly, we find that IRL is the most robust.
-\hirl is relatively robust but is slightly worse than IRL for a large number of random obstacles.
-We wanted to understand why \hirl was less robust than standard IRL, so we manually set the number of segments in \hirl to $4$.
-The performance of \hirl with 4 segments is much worse.
-This is because obstacles can ``invalidate'' segments.
-This suggests an interesting tradeoff where more segments can serve to more precisely guide the agent towards the goal, but less segments lead to improved generalization.
-
-\subsection{Simulated Control Domains}
-Next, we describe \hirl on simulated control domains. These illustrate examples with continuous state-spaces.
-
-
-
-
-
-
-
-\begin{figure*}[t]
-\centering
- \includegraphics[width=0.8\textwidth]{exp/rc-convergence-1.png}
- \caption{Performance on a parallel parking task with noisy dynamics with full state observations (position, orientation, and velocity), partial observation (only position and orientation), and transfer (randomly permuting the action space).
- Success is measured in terms of the probability that the car successfully parked, and (M) denotes whether the approach used the dynamics model.
- In the fully observed case, both the model-based and model-free \hirl algorithms converge faster than MaxEnt-IRL and quickly outperforms the SVM.
- In the partially observed case, MaxEnt-IRL, Q-Learning, and the SVM fail--while \hirl succeeds.
- Both techniques also demonstrate comparable transferability to MaxEnt-IRL when the domain's dynamics are perturbed.
-\label{exp:rcsegmentation-res}}
-\end{figure*}
-
-
-
-\begin{figure*}[t]
-\centering
- \includegraphics[width=0.8\textwidth]{exp/acr-convergence-1.png}
- \caption{Acrobot: We measured the performance of rewards constructed with \hirl and the alternatives. We find that \hirl (model-based and model-free) converges faster than MaxEnt-IRL, Q-Learning, and the SVM.
- Furthermore, \hirl requires less demonstrations, which we measure by comparing the performance of the alternatives after a fixed 50000 time-steps and with varied input demonstrations. 
- We also vary the task parameters by changing the size of the second link of the pendulum and find that the learned rewards are robust to this variation (as before comparing the performance of the alternatives after a fixed 50000 time steps). MaxEnt-IRL shows improved transfer performance since once the task has changed enough the segments learned during the demonstrations may not be informative and may even hurt performance if they are misleading. 
- \label{exp:acsegmentation-res2}}
-\end{figure*}
 
 \begin{figure}[t]
 \centering
@@ -223,42 +254,10 @@ Next, we describe \hirl on simulated control domains. These illustrate examples 
 % \vspace{-15pt}
 \end{figure}
 
-\begin{figure}[t]
-
-    \includegraphics[width=\columnwidth]{exp/signals.png}
-    \raggedright
-    \includegraphics[width=0.9\columnwidth]{exp/segmentation.png}
-    \caption{A representative demonstration of the deformable sheet grasping task with relevant features plotted over time. \hirl identifies 4 segments when applied to the deformable sheet grasping task. 
-    }
-    \label{exp:dvrk3}
-% \vspace{-15pt}
-\end{figure}
-
-\subsubsection{Acrobot}\label{exp:acrobot}
-This domain consists of a two-link pendulum with gravity and with torque controls on the joint. The dynamics are noisy and there are limits on the applied torque. The robot has 1000 timesteps to raise the arm above horizontal ($y=1$ in the images). If the task is successful and the robot receives a reward of $1$. 
-Thus, the expected reward is equivalent to the probability that the current policy will successfully raise the arm above horizontal.
-We generated $N=5$ demonstrations for the Acrobot task and applied segmentation. 
-These demonstrations were generated by training the Q-Learning baseline to convergence and then sampling from the learned policy.
-%We visualize the learned segments in Figure \ref{exp:acroseg}, which can be seen to qualitatively describe a successful path.
-In Figure \ref{exp:acsegmentation-res2}, we plot the performance of the all of the approaches.
-We include a comparison between a Linear Multiclass SVM and a Kernelized Multiclass SVM for the policy learning alternative.
-In this example, we find that applying MaxEnt-IRL does not improve the convergence rate.
-For this state-space, MaxEnt-IRL merely recovers the reward used in the original RL problem.
-On the other hand, added segments using \hirl improve convergence rates.
-
-% the \hirl approaches add segments making it easier to converge.
-
-We also vary the number of input demonstrations to \hirl and find that it requires fewer demonstrations than policy learning and MaxEnt-IRL to converge to a more reliable policy.
-It takes about 10x more demonstrations for the supervised learning approach to reach comparable reliability.
-Finally, we find that \hirl does not sacrifice much transferability.
-We learn the rewards on the standard pendulum, and then during learning we vary the size of the second link in the pendulum.
-We plot the success rate (after a fixed 50000 steps) as a function of the increase link size.
-\hirl is significantly more robust than supervised policy learning to the increase in link size and has a significantly higher success rate than IRL for small perturbations in link size. 
 
 \subsection{Physical Experiments with the da Vinci Surgical Robot}
 
-
-\subsubsection{Deformable Sheet Grasping and Tensioning: } Next, we apply \hirl to learn to how to grasp and tension a sheet of gauze. The experimental setup is pictured in Figure \ref{exp:dvrk2}. The basic setup is a sheet of gauze fixtured at the two far corners. The robot's task to the grasp the gauze on the opposing side, lift it up, and in the process flatten the sheet out.
+\subsubsection{Deformable Sheet Tensioning: } Next, we apply \hirl to learn to how to grasp and tension a sheet of gauze. The experimental setup is pictured in Figure \ref{exp:dvrk2}. The basic setup is a sheet of gauze fixtured at the two far corners. The robot's task to the grasp the gauze on the opposing side, lift it up, and in the process flatten the sheet out.
 This task is not usually successful in an open-loop trajectory due to deformation after the grasp.
 Some grasps pick up more or less of the material and the flattening procedure has to be accordingly modified.
 The state-space is the 6 DoF end-effector position of the robot, the current load on the wrist of the robot, and a visual feature measuring the differences in disparity markers on the sheet (a proxy for flatness).
@@ -302,6 +301,22 @@ SWIRL+MB (no init)                  & 15                                       &
 \textbf{SWIRL+MB (BC init)}                  & 15                                       & 100                                & \textbf{-2241}                       
 \end{tabular}
 \end{table}
+
+
+
+\begin{figure}[t]
+
+    \includegraphics[width=\columnwidth]{exp/signals.png}
+    \raggedright
+    \includegraphics[width=0.9\columnwidth]{exp/segmentation.png}
+    \caption{A representative demonstration of the deformable sheet grasping task with relevant features plotted over time. \hirl identifies 4 segments when applied to the deformable sheet grasping task. 
+    }
+    \label{exp:dvrk3}
+% \vspace{-15pt}
+\end{figure}
+
+
+
 
 \subsubsection{Surgical Line Cutting: }
 In the next experiment, we evaluate generalization to different task instances.
