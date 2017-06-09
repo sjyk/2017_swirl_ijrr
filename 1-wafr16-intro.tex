@@ -16,7 +16,6 @@ Segmentation facilitates learning localized control policies~\citep{murali2015le
 Often these segments are manually designed or derived from a dictionary of motion primitives, but recently there are several approaches for learning segments automatically by identifying locally similar structure in demonstration data~\citep{barbivc2004segmenting, chiappa2010movement,  alvarez2010switched,calinon2010learning, kruger2012imitation, niekum2012learning, wachter2015hierarchical, lee2015autonomous}.
 While prior work has considered segmentation to reduce the complexity of deterministic planning problems, this paper explores how segmentation can inform reward derivation in apprenticeship learning for sequential tasks.
 
-The basic model follows from a special case of Hierarchical Reinforcement Learning~\cite{suttonPS99}.
 We model a task as a sequence of quadratic reward functions $\mathbf{R}_{seq}=[R_1,...,R_k]$ and transition regions (ellipsoidal subsets of the state-space) $G = [\rho_1, ...,\rho_k]$ such that $R_1$ is the reward function until $\rho_1$ is reached, after which $R_2$ becomes the reward and so on.
 We assume that we have access to a supervisor that provides demonstrations that are optimal w.r.t an unknown $\mathbf{R}_{seq}$, and reach each $\rho \in G$ (also unknown) in the same sequence. 
 \hirlfull (\hirl) is an algorithm to recover $\mathbf{R}_{seq}$ and $G$ from the demonstration trajectories.
@@ -27,14 +26,19 @@ Finally, $\mathbf{R}_{seq}$ and $G$ can be used in an RL algorithm to find an op
 
 \hirl segments the demonstrations using a variant of a segmentation algorithm proposed in our prior work~\cite{krishnan2015tsc,murali2016}, called Transition State Clustering (TSC).
 TSC identifies locally similar dynamical segments in a trajectory and fits a Gaussian Mixture Model to the end-points of the segments to learn a model to determine when and where a segment terminates.
-While our original motivation was to improve the robustness of kinematic segmentation algorithms by pruning sparse clusters, TSC can also be interpreted as infering the subtask transition regions $G$.
+While our original motivation was to improve the robustness of kinematic segmentation algorithms by pruning sparse clusters, TSC can also be interpreted as inferring the subtask transition regions $G$.
 \hirl extends TSC by: (1) formalizing a class of Markov segmentation algorithms that could apply, and (2) combining TSC with a kernel embedding to handle certain types of non-linearities and discontinuities in the state-space.
 Once the segments are found, \hirl applies Maximum Entropy Inverse Reinforcement Learning~\cite{DBLP:conf/aaai/ZiebartMBD08} to each set of segments to find $\mathbf{R}_{seq}$.
 
 Learning a policy from $\mathbf{R}_{seq}$ and $G$ is nontrivial because solving $k$ independent problems neglects any shared structure in the value function during the policy learning phase (e.g., a common failure state).
 Jointly learning over all segments introduces a dependence on history, namely, any policy must complete step $i$ before step $i+1$.
 Learning a memory-dependent policy could lead to an exponential overhead of additional states. 
-\hirl exploits the fact that TSC is a Markov segmentation algorithm and shows that the problem can be posed as a propoer MDP in a lifted state-space that includes an indicator variable of the highest-index $\{1,...,k\}$ transition region that has been reached so far.
+\hirl exploits the fact that TSC is a Markov segmentation algorithm and shows that the problem can be posed as a proper MDP in a lifted state-space that includes an indicator variable of the highest-index $\{1,...,k\}$ transition region that has been reached so far.
+
+The basic model follows from a special case of Hierarchical Reinforcement Learning~\cite{suttonPS99}.
+In hierarchical reinforcement learning, multi-step skills are composed of local policies called ``options''. Each option executes until a termination condition and a meta-policy selects the next option to execute.
+\hirl is an IRL framework for inferring termination conditions ($G$) and local reward functions that guide the agent to these termination states $\mathbf{R}_{seq}$, where the meta-policy is deterministic and sequential.
+
 
 In summary, our contributions are:
 \begin{enumerate}

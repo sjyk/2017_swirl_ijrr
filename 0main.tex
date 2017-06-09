@@ -71,14 +71,15 @@ Ken Goldberg%,
 \begin{document}
 
 \begin{abstract}
-\textbf{SK. TODO revise}
-Inverse Reinforcement Learning (IRL) allows a robot to generalize from demonstrations to previously unseen scenarios by learning the demonstrator's reward function.
+Inverse Reinforcement Learning (IRL) is a technique to learn a reward function that best explains a supervisor's behavior.
+These reward functions can be used to find policies for new instances of a task.
 However, in multi-step tasks, the learned rewards might be delayed and hard to directly optimize.
-We present \hirlfull (\hirl), a three-phase algorithm that partitions a complex task into shorter-horizon subtasks that occur consistently across demonstrations.
-\hirl then learns a sequence of local reward functions that describe the motion between transitions. 
+One approach is to segment the task into shorter sub-tasks and learn local reward functions.
+We present \hirlfull (\hirl), a three-phase algorithm that automatically partitions a task into shorter-horizon sub-tasks based on transitions that occur consistently across demonstrations.
+\hirl then learns a sequence of local reward functions using Maximimum Entropy Inverse Reinforcement Learning. 
 Once these reward functions are learned, \hirl applies Q-learning to compute a policy that maximizes the rewards. 
-We formalize requirements on the segmentation algorithm that make this possible and evaluate \hirl in a number of discrete and continuous RL domains.
-In physical experiments using the da Vinci surgical robot, we evaluate the extent to which \hirl generalizes from linear cutting demonstrations to cutting sequences of curved paths and can help learn multi-step policies for deformable tensioning.
+We evaluate \hirl in a two simulated control tasks, parallel parking and a two-link pendulum, and two physical experiments using the da Vinci surgical robot, tensioning and cutting deformable sheets.
+Our results suggest that \textbf{TODO}
 \end{abstract} 
 
 \maketitle

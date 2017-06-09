@@ -1,19 +1,32 @@
-\section{Problem Statement and Model}
+\section{Model and Problem Statement}
 \seclabel{back}
-Next, we describe the basic model and problem statement of \hirl.
 
-\subsection{Sequential Task Model}
-Consider a finite-horizon Markov Decision Process (MDP): \[\mathcal{M} = \langle S,A,P(\cdot,\cdot),\mathbf{R},T \rangle,\] where $S$ is the set of states (continuous or discrete), $A$ is the set of actions (finite and discrete), $P: S \times A \mapsto Pr(S)$ is the dynamics model that maps states and actions to a probability density over subsequent states, $T$ is the time-horizon, and $\mathbf{R}$ is a reward function that maps trajectories of length $T$ to scalar values. At every state $s$, we also observe a vector of perceptual features $x = o(s)$. 
+\subsection{Basic Setup}
+Consider a finite-horizon Markov Decision Process (MDP): \[\mathcal{M} = \langle S,A,P(\cdot,\cdot),\mathbf{R},T \rangle,\] where $S$ is the set of states (continuous or discrete), $A$ is the set of actions (finite and discrete), $P: S \times A \mapsto Pr(S)$ is the dynamics model that maps states and actions to a probability density over subsequent states, $T$ is the time-horizon, and $\mathbf{R}$ is a reward function that maps trajectories of length $T$ to scalar values. At every state $s$, we also observe a vector of perceptual features $x = o(s)$.
+The feature space can be a concatenation of kinematic features $X_{k}$ (e.g., robot position) and sensory features $X_{s}$ (e.g., visual features from the environment).
 
 Sequential tasks are tasks composed of sequences of sub-tasks. There is a sequence $\mathbf{R}_{seq}=[R_1,...,R_k]$, where each $R_i: S \times A \mapsto \mathbb{R}$. Associated with each $R_i$ is a transition region $\rho_i \subseteq S$. 
 Each trajectory accumulates a reward $R_i$ until it reaches the transition $\rho_i$, then the robot switches to the next reward and transition pair.
 This process continues until $\rho_k$ is reached.
 A robot is deemed \emph{successful} when all of the $\rho_i \in G$ are reached in sequence.
 
-\vspace{0.25em} \noindent \textbf{Informal Problem Statement: } Given observations of a successful robot through a set of demonstration trajectories $D = \{d_1,...,d_k\}$, can we infer $\mathbf{R}_{seq}$ and $G$?
+Inverse Reinforcement Learning (IRL)~\cite{ng2000algorithms} describes the problem of observing an agent's behavior and inferring a reward function that best explains the agent's actions (assuming the agent is behaving optimally).
+Let $D=\{d_i\}$ be a set of demonstrations of a robotic task.
+Each demonstration of a task $d$ is a discrete-time sequence of $T$ feature vectors.
+In this paper, we consider the sequential version of this problem, where we have to infer $k$ reward functions and $k$ transition regions.
+
+\vspace{0.25em} \noindent \textbf{Sequential IRL Problem: } Given observations of a successful robot through a set of demonstration trajectories $D = \{d_1,...,d_k\}$, infer $\mathbf{R}_{seq}$ and $G$.
+
+\vspace{0.25em}
+
+Most IRL algorithms actually implicitly learn an optimal policy. However, we observed a number of practical challenges in real settings: (1) the reward function can often be represented more concisely (fewer parameters) than the policy, and as such, the demonstration data might be sufficient to estimate an accurate reward but not a useful policy, (2) the dynamics of the demonstration environment often differ slightly from the dynamics of the execution environment--making the rewards transferable but not the policies, and (3) transfer problems where the task instance has changed. 
+In the most general case, we will have to apply RL to learn a policy.
+
+\vspace{0.25em} \noindent \textbf{Sequential RL: } Given a new instance, $\mathbf{R}_{seq}$, and $G$, learn an optimal policy $\pi^*$.
+
 
 \subsection{Modeling Assumptions}
-To make this problem statement more formal and computationally tractable, we have to make a few modeling assumptions.
+To make these problem statements more formal and computationally tractable, we make some modeling assumptions.
 
 \vspace{0.5em}\noindent\textbf{Assumption 1. Reward Transitions are Identifiable: } The key challenge in this problem is determining when a transition occurs--identifying the points in time in each trajectory at which the robot reaches a $\rho_i$ and transitions the reward function. The natural first question is whether this is identifiable, that is, whether it is even theoretically possible to determine whether a transition $\rho_i \rightarrow \rho_{i+1}$ has occurred after obtaining an infinite number of observations. Trivially, this is not guaranteed when $R_{i+1} = R_{i}$, where it would be impossible to identify a transition purely from the supervisor's behavior (i.e., no change in reward, implies no change in behavior). Perhaps surprisingly, this is still not guaranteed even if $R_{i+1} \ne R_{i}$ due to policy invariance classes~\cite{DBLP:conf/icml/NgHR99}. Consider a reward function $R_{i+1} = 2R_{i}$, which functionally induce the same optimal behavior. Therefore, we consider a setting where all of the rewards in $\mathbf{R}_{seq}$ are distinct and are not equivalent w.r.t optimal policies.
 
@@ -32,14 +45,14 @@ R_{i+1} = R_{i} + F
 This is a known necessary and sufficient result, see Theorem 1 in~\cite{DBLP:conf/icml/NgHR99}.
 \end{proof}
 
-
 \vspace{0.5em}\noindent\textbf{Assumption 2. Myopic Optimality: } Next, to be able to infer the reward function we have to assume that the supervisor is behaving optimal with respect to it. However, in the sequential problem the globally optimal solution (maximizes the cumulative reward of all sub-tasks) is not necessarily locally optimal. For example, it might be advantageous to be sub-optimal in an earlier sub-task if it leads to a much higher reward in a later sub-task. We make the assumption that the supervisor's behavior is \emph{myopic}, i.e., the supervisor applies the optimal stationary policy with respect to its current reward function ignoring all future rewards. 
 
+\vspace{0.5em}\noindent\textbf{Assumption 3. Successful Demonstrations: } We also need conditions on the demonstrations to be able to infer $G$. We assume that all demonstrations are successful, that is, they visit each $\rho_i \in G$ in the same sequence.
 
-\vspace{0.5em}\noindent\textbf{Assumption 3. Quadratic Rewards: } We assume that each reward function $R_i$ is a quadratic of the form $(x-x_0)^T Q (x - x_0)$ for some positive semi-definite $Q$, some feature vectore $x$ that is a function of the current state, and a center point $x_0$ with $x_0^T Q x_0 = 0$. This means that for a d-dimensional feature space there are $O(kd^2)$ parameters that describe the reward function.
+\vspace{0.5em}\noindent\textbf{Assumption 4. Quadratic Rewards: } We assume that each reward function $R_i$ can be expressed as a quadratic of the form $(x-x_0)^T Q (x - x_0)$ for some positive semi-definite $Q$, some feature vectore $x$ that is a function of the current state, and a center point $x_0$ with $x_0^T Q x_0 = 0$. This means that for a d-dimensional feature space there are $O(kd^2)$ parameters that describe the reward function.
 
 
-\vspace{0.5em}\noindent\textbf{Assumption 4. Ellipsoidal Approximation: } Finally, we assume that the termination regions in $G$ can be approximated by a set of disjoint ellipsoids over the perceptual features.
+\vspace{0.5em}\noindent\textbf{Assumption 5. Ellipsoidal Approximation: } Finally, we assume that the termination regions in $G$ can be approximated by a set of disjoint ellipsoids over the perceptual features.
 
 \subsection{Algorithm Description}
 Let $D$ be a set of demonstration trajectories $\{d_1,...,d_N\}$ of a task with a delayed reward.
@@ -56,11 +69,15 @@ Let $D$ be a set of demonstration trajectories $\{d_1,...,d_N\}$ of a task with 
     % itemindent=3ex
     ]
     \item \textbf{Sequence Learning: } Given $D$, \hirl segments the task into $k$ sub-tasks whose start and end are defined by arrival at a set of transitions $G = [\rho_1,...,\rho_k]$.
-    \item \textbf{Reward Learning: } Given $G$ and $D$, \hirl associates a local reward function with the segment resulting in a sequence of rewards $\mathbf{R}_{seq}$. 
-    \item \textbf{Policy Learning: } Given $\mathbf{R}_{seq}$ and $G$, \hirl applies reinforcement learning for $I$ iterations to learn a policy for the task $\pi$.
+    \item \textbf{Reward Learning: } Given $G$ and $D$, \hirl associates a local reward function with each segment resulting in a sequence of rewards $\mathbf{R}_{seq}$. 
+    \item \textbf{Policy Learning: } Given $\mathbf{R}_{seq}$ and $G$, \hirl applies reinforcement learning for $I$ iterations to learn a policy for the task $\pi$. 
 \end{enumerate}
 
 \noindent\textbf{Outputs:} Policy $\pi$
+
+The transition regions $G$ provide a way to verify that the learned policy is viable.
+We can rollout the policy and observe whether it reaches all of the $\rho_i \in G$ in the right sequence.
+If this is not the case, we can report a failure.
 
 
 

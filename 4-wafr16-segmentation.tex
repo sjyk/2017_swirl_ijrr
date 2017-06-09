@@ -1,21 +1,21 @@
-\section{\hirl: Sequence Learning}
+\section{Phase 1: Sequence Learning}
 \seclabel{hirl}
-The first phase of \hirl is to segment the demonstrations into consistent segments.
-Let $D=\{d_i\}$ be a set of demonstrations of a robotic task.
-Each demonstration of a task $d$ is a discrete-time sequence of $T$ state vectors in a feature-space $\mathcal{X}$.
-The feature space can be a concatenation of kinematic features $X_{k}$ (e.g., robot position) and sensory features $X_{s}$ (e.g., visual features from the environment).
+The first phase of \hirl is to segment the demonstrations.
 
-\begin{definition}[Segmentation]
-A segmentation of task is defined as a function $\mathbf{S}_k$ that assigns each state in every demonstration trajectory to an integer $1,2,...,k$:
-\[
-\mathbf{S}_k: d \mapsto [k]
-\]
-and $\mathcal{S}_k$ is a non-decreasing function in time (no repetitions).
-\end{definition}
+\subsection{Formalizing Segmentation}
+While, there are a number of different algorithms for segmenting a set of demonstrations into sub-sequences, not all are directly applicable to the learning problem setting.
+This is because the segments are used in two different ways. During the offline phases of the algorithm (Sequence Learning and Reward Learning), the algorithm observes the full demonstration trajectory.
+These segments are used to generate the local reward functions.
+Since it is offline, the segmentation is fully observed that is all of the learning components know which segment is active at any given time step.
 
-This means that not only is each demonstration divided into k segments but these segments are corresponded across demonstrations with indices.
-This is the definition of sequential task segmentation used in our prior work~\cite{krishnan2015tsc,murali2016}.
-However, in this paper, we need a further restriction that the segmentation method preserves the Markov Decision Process structure, and can be applied during a rollout.
+During the online phase of the algorithm (Policy Learning), the algorithm only observes the partial trajectory up-to the current time-step.
+From these observations, we need to be able to known which segment is currently active.
+In this sense, segmentation introduces a problem of partial observation even if the original task is fully observed.
+First, we need to formalize under what conditions this is possible and efficient.
+
+Trivially, some algorithms are not causal since they might require knowledge of future data (e.g., a forward-backward HMM algorithm).
+Even if the algorithm is causal, it might have an arbitrary dependence on the past leading to inefficient estimation of the currently active segment.
+To address this problem, we formalize the following condition:
 
 \begin{definition}[Markov Segmentation]
 A Markov segmentation function is a task segmentation where the segmentation index of time $t+1$ can be completely determined by the state at time $t$ and the index at time $t$:
@@ -24,12 +24,8 @@ i_{t+1} = \mathbf{M}(s_t, i_t)
 \]
 \end{definition}
 
-Not all segmentation functions satisfy the Markov segmentation property. For example, a model where the terminal state of the trajectory determines how the trajectory is divided into segments.
-This can happen in Bayesian algorithms that require a forward-backward estimate for segment inference.
-
-\subsection{Learning Markov Segmentation Criteria}
-The first challenge in \hirl is designing such Markov Segmentation functions.
-Our key insight is that one can extract such a function with a probabilistic model from an underlying non-Markov segmentation technique.
+\subsection{General Framework}
+We now describe a general framework that takes a general segmentation algorithm and extracts a Markov segmentation criteria.
 Suppose, we are given a general function that just identifies candidate segment endpoints.
 Such a function is weaker than a segmentation function since it does not globally label the detected segments.
 
@@ -65,8 +61,14 @@ These regions are ordered since they are also defined over time, since we make t
 Thus, reaching one of these regions defines a testable condition based on the current state, time, and previously reached regions--which is a Markov Segmentation Function.
 The result is exactly the set of transition regions: $G = [\rho_1, \rho_2,...,\rho_k]$, and segmentation of each demonstration trajectory into $k$ segments.
 
-\subsection{Experimental Implementation}
-In our experiments, we use the following transition identification algorithm.
+In typical GMM formulations, one must specify the number of mixture components $k$ before hand.
+However, we apply results from Bayesian non-parametric statistics and jointly solve for the component parameters and the number of components using a Dirichlet Process~\cite{kulis2011revisiting}.
+Using a DP, the number of components grows with the complexity of the observed data (we denote this as DP-GMM).
+
+\subsection{GMM-based Segmentation}
+As an instance of the general framework, we use Gaussian Mixture Models to segment demonstrations in our experiments.
+This technique is quite general and applies to a large class of linear and non-linear systems.
+
 A popular approach for transition identification is to use Gaussian Mixture Models~\cite{calinon2014skills}, namely, cluster all state observations and identify times at which $x_t$ is in a different cluster than $x_{t+1}$.
 For a given time $t$, we can define a window of length $\ell$ as:
 \[
@@ -82,14 +84,8 @@ The GMM model defines $m$ multivariate Gaussian distributions and a probability 
 We annotate each observation with the most likely mixture component.
 Times such that $\mathbf{n}^{(\ell)}_t$ and $\mathbf{n}^{(\ell)}_{t+1}$ have different most likely components are marked as transitions.
 This has the interpretation of fitting a locally linear regression to the data (refer to~\cite{moldovan2013dirichlet, khansari2011learning, kruger2010learning, krishnan2015tsc,murali2016} for details).
-In typical GMM formulations, one must specify the number of mixture components $k$ before hand.
-However, we apply results from Bayesian non-parametric statistics and jointly solve for the component parameters and the number of components using a Dirichlet Process~\cite{kulis2011revisiting}.
-Using a DP, the number of components grows with the complexity of the observed data (we denote this as DP-GMM).
 
-
-\subsection{Relaxing Local Linearity}
-GMM's are a type of local Bayesian linear regression, but we can easily relax the linearity assumption.
-We relax the linear dynamics assumption with a kernel embedding of the trajectories.
+If the system's local dynamics are non-linear or discontinuous, we can smooth out the dynamics with a kernel embedding of the trajectories.
 The basic idea is to apply Kernelized PCA to the features before learning the transitions--a technique used in Computer Vision~\cite{DBLP:conf/nips/MikaSSMSR98}.
 By changing the kernel function (i.e., the similarity metric between states), we can essentially change the definition of local linearity.
 

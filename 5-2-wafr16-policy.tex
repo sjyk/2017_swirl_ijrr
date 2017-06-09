@@ -1,14 +1,12 @@
 \section{\hirl: Policy Learning}
 \seclabel{policy-learning}
-If the demonstration dynamics are consistent with the execution setting, while learning the reward with MaxEnt-IRL, an optimal policy can simultaneously be extracted. However, we observed a number of practical challenges: (1) the reward function can often be represented more concisely than the policy, and as such, the demonstration data might be sufficient to estimate an accurate reward but not a useful policy, (2) the dynamics of the demonstration environment often differ slightly from the dynamics of the execution environment--making the rewards transferable but not the policies, and (3) transfer problems where the task instance has changed. 
-
-Our solution is to refine the learned policy with physical rollouts. \hirl uses the learned transitions $[\rho_1,...,\rho_k]$ and $\mathbf{R}_{seq}$ as rewards for a Reinforcement Learning algorithm. In this section, we describe learning a policy $\pi$ given rewards $\mathbf{R}_{seq}$ and an ordered sequence of transitions $G$.
+ \hirl uses the learned transitions $[\rho_1,...,\rho_k]$ and $\mathbf{R}_{seq}$ as rewards for a Reinforcement Learning algorithm. In this section, we describe learning a policy $\pi$ given rewards $\mathbf{R}_{seq}$ and an ordered sequence of transitions $G$.
 However, this problem is not trivial since solving $k$ independent problems neglects potential shared value structure between the local problems (e.g., a common failure state).
 Furthermore, simply taking the aggregate of the rewards can lead to inconsistencies since there is nothing enforcing the order of operations.
 The key insight is that a single policy can be learned jointly over all segments over a modified problem where the state-space with additional variables that keep track of the previously achieved segments.
 
 \subsection{Off Policy RL Algorithms}
-There are two classes of RL algorithms, on-policy algorithms (e.g., Policy Gradients, Trust Region Policy Optimization) and off-policy algirithms (e.g., Q-Learning). An on-policy algorithm learns the value of the policy being carried out by the agent and incrementally optimizes this policy. On policy are often more efficient since the robot learns to optimize the reward function in states that it is likely to visit, however, it requires that exploration is done with a specific policy that is continuously updated.
+There are two classes of RL algorithms, on-policy algorithms (e.g., Policy Gradients, Trust Region Policy Optimization) and off-policy algorithms (e.g., Q-Learning). An on-policy algorithm learns the value of the policy being carried out by the agent and incrementally optimizes this policy. On policy are often more efficient since the robot learns to optimize the reward function in states that it is likely to visit, however, it requires that exploration is done with a specific policy that is continuously updated.
 On the other hand, off-policy algorithms learn value of the optimal policy regardless of the policy used to collect the data, as long the robot sufficiently explores the space.
 This is highly beneficial for our problem setting.
 A single fixed exploration policy can be used to collect a large batch of data up front, which we can use to refine our model.
@@ -31,15 +29,16 @@ Accordingly, the parametrized reward function $R$ is defined over $S$, $A$, and 
 $\mathcal{M}_H$ allows us to address the sequentiality problem since the reward is a function of the state and the history sequence.
 However, without some parametrization of $H_t$, directly solving this MDPs with RL is impractical since it adds an overhead of $\mathcal{O}(e^{T})$ states.
 
-Our key insight is to the leverage the definition of the Markov Segmentation function formalized earlier.
+We can leverage the definition of the Markov Segmentation function formalized earlier to avoid this exponential complexity.
 We know that the reward transitions ($R_{i}$ to $R_{i+1}$) only depend on an arrival at the transition state $\rho_{i}$ and not any other aspect of the history.
 Therefore, we can store an index $v$, that indicates whether a transition state $i \in 0,...,k$ has been reached.
 This index can be efficiently incremented when the current state $s \in \rho_{i+1}$.
 The result is an augmented state-space $\binom{s}{v}$ to account for previous progress.
+In this lifted space, the problem is a fully observed MDP.
 Then, the additional complexity of representing the reward with history over $S \times  [k]$ is only $\mathcal{O}(k)$ instead of exponential in the time horizon.
 
 \subsection{Segmented Q-Learning}
-At a high-level, the objective of standard Q-Learning is to learn the function $Q(s,a)$ of the optimal policy, which is the expected reward the agent will recieve taking action $a$ in state $s$, assuming future behavior is optimal. 
+At a high-level, the objective of standard Q-Learning is to learn the function $Q(s,a)$ of the optimal policy, which is the expected reward the agent will receive taking action $a$ in state $s$, assuming future behavior is optimal. 
 Q-Learning works by first initializing a random $Q$ function. Then, it samples rollouts from an exploration policy collecting $(s,a,r, s')$ tuples. From these tuples, one can calculate the following value:
 \[
 y_i = R(s,a) + \arg \max_{a} Q(s',a)
@@ -54,7 +53,7 @@ L(Q) = \sum_{i} \|y_i - Q(s,a)\|_2^2
 \]
 This loss can be optimize with gradient descent. When the state and action space is discrete, the representation of the Q function is a table, and we get the familar Q-Learning algorithm--where each gradient step updates the table with the appropriate value. When Q function needs to be approximated, then we get the Deep Q Network algorithm.
 
-\hirl applies a variant of Q-Learning to optimize the policy over the sequential rewards. This is summarized in Algorithm~\ref{alg:tsh3}. The basic change to the algorithm is to augement the state-space with indicator vector that indicates the transition regions that have been reached. So each of the rollouts, now records a tuple $(s,\textbf{v},a,r, s', \textbf{v'})$ that additionally stores this information. The Q function is now defined over states, actions, and segment index--which also selects the appropriate local reward function:
+\hirl applies a variant of Q-Learning to optimize the policy over the sequential rewards. This is summarized in Algorithm~\ref{alg:tsh3}. The basic change to the algorithm is to augment the state-space with indicator vector that indicates the transition regions that have been reached. So each of the rollouts, now records a tuple $(s,\textbf{v},a,r, s', \textbf{v'})$ that additionally stores this information. The Q function is now defined over states, actions, and segment index--which also selects the appropriate local reward function:
 \[
 Q(s,a,v) = R_v(s,a) + \arg \max_{a} Q(s',a, v')
 \]
