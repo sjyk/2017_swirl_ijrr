@@ -42,11 +42,10 @@ The learned reward functions and transition regions are used in the policy learn
 
 \begin{figure}[t]
 \centering
- \includegraphics[width=\columnwidth]{new-exp/pp-fo.png}
+ \includegraphics[width=0.8\columnwidth]{new-exp/pp-fo.png}
  \caption{For a fixed number of demonstrations $5$, we vary the number of rollouts and measure the average reward at each rollout. (QL) denotes Q-learning, (SVM) denotes a baseline of behavioral cloning with a SVM policy representation, (IRL-E) denotes MaxEnt-IRL with estimated dynamics, (IRL-G) denotes MaxEnt-IRL with ground truth dynamics, (SWIRL-E) denotes SWIRL with local MaxEnt-IRL and estimated dynamics, (SWIRL-G) denotes SWIRL with local MaxEnt-IRL and ground truth dynamics, and (SWIRL-MF) denotes the model-free version of SWIRL. SWIRL achieves the same reward as QL with 15\% of the rollouts, and the same reward as IRL with 66\% of the rollouts. \label{exp:pp-fo1}}
 \end{figure}
 
-<<<<<<< HEAD
 \subsubsection{Fixed Demonstrations, Vary Rollouts}
 In the first experiment, we fix number of initial demonstrations $N=5$, and vary the number of rollouts (Figure \ref{exp:pp-fo1}).
 The basline line Q-Learning approach (QL) is very slow, because it relies on random exploration to achieve the goal at least once before it can start estimating the value of states and actions.
@@ -71,7 +70,7 @@ With a single quadratic reward (as in IRL), the car has to learn to make a seque
 
 \begin{figure}[t]
 \centering
- \includegraphics[width=\columnwidth]{new-exp/pp-fo2.png}
+ \includegraphics[width=0.8\columnwidth]{new-exp/pp-fo2.png}
  \caption{For a number of rollouts $500$, we vary the number of demonstration trajectories given to each technique. (QL) denotes Q-learning, (SVM) denotes a baseline of behavioral cloning with a SVM policy representation, (IRL-E) denotes MaxEnt-IRL with estimated dynamics, (IRL-G) denotes MaxEnt-IRL with ground truth dynamics, (SWIRL-E) denotes SWIRL with local MaxEnt-IRL and estimated dynamics, (SWIRL-G) denotes SWIRL with local MaxEnt-IRL and ground truth dynamics, and (SWIRL-MF) denotes the model-free version of SWIRL. SWIRL is less senstive to the number of demonstrations observed than the SVM. With only 5 demonstrations, SWIRL is within 10\% of its reward if it observed 100 demonstrations. \label{exp:pp-fo2}}
 \end{figure}
 
@@ -95,7 +94,7 @@ The combination of the two approaches allows us to take advantage of a small num
 
 \begin{figure}[t]
 \centering
- \includegraphics[width=\columnwidth]{new-exp/pp-fo3.png}
+ \includegraphics[width=0.8\columnwidth]{new-exp/pp-fo3.png}
  \caption{For $500$ rollouts  and $100$ demonstrations, we measure the robustness of the approaches to changes in the execution dynamics. (QL) denotes Q-learning, (SVM) denotes a baseline of behavioral cloning with a SVM policy representation, (IRL-E) denotes MaxEnt-IRL with estimated dynamics, (IRL-G) denotes MaxEnt-IRL with ground truth dynamics, (SL-E) denotes SWIRL with local MaxEnt-IRL and estimated dynamics, (SL-G) denotes SWIRL with local MaxEnt-IRL and ground truth dynamics, and (SL-MF) denotes the model-free version of SWIRL. While the SVM is 95\% successful on the original domain, its success does not transfer to the perturbed setting. On the other hand, SWIRL learns rewards and segments that transfer to the new dynamics since they are state-space goals. \label{exp:pp-fo3}}
 \end{figure}
 
@@ -111,10 +110,10 @@ The success rate of the policy learned with Q-Learning is more or less constant 
 This is because Q-learning does not use any information from the original domain.
 The SVM behavioral cloning policy has a drastic change.
 On the original domain with a 100 demonstrations it acheives a 95\% success rate, however, on the perturbed domain it is never successful.
-This is becauce the SVM learned a policy that causes it to crash into one of the obstacles in the perturbed environment.
+This is because the SVM learned a policy that causes it to crash into one of the obstacles in the perturbed environment.
 
 The IRL techniques are more robust during the transfer.
-This is because the rewards learned are quadratic functions of the state and do not enocde anything specific about the dynamics.
+This is because the rewards learned are quadratic functions of the state and do not encode anything specific about the dynamics.
 Similarly, in SWIRL, the rewards and transition regions are invariant to the dynamics in this transfer problem.
 For SWIRL-E and SWIRL-G, there is only a drop of 5\% in the success rate.
 On the other hand, the model-free version of SWIRL reports a larger drop of 16\%.
@@ -127,7 +126,7 @@ However, the transition regions give us a formalism to detecting such problems d
 
 \begin{figure}[t]
 \centering
- \includegraphics[width=\columnwidth]{new-exp/pp-po.png}
+ \includegraphics[width=0.8\columnwidth]{new-exp/pp-po.png}
  \caption{We hid the velocity state from the robot, so the robot only sees $(x,y,\theta)$. For a fixed number of demonstrations $5$, we vary the number of rollouts and measure the average reward at each rollout. (QL) denotes Q-learning, (SVM) denotes a baseline of behavioral cloning with a SVM policy representation, (IRL-E) denotes MaxEnt-IRL with estimated dynamics, (IRL-G) denotes MaxEnt-IRL with ground truth dynamics, (SWIRL-E) denotes SWIRL with local MaxEnt-IRL and estimated dynamics, (SWIRL-G) denotes SWIRL with local MaxEnt-IRL and ground truth dynamics, and (SWIRL-MF) denotes the model-free version of SWIRL. SWIRL converges will the other approaches fail to reach a reliable success rate \label{exp:pp-po}}
 \end{figure}
 
@@ -153,8 +152,8 @@ After 250000 time-steps, the policy learned with model-based \hirl has a 95\% su
 
 \begin{figure*}[t]
 \centering
- \includegraphics[width=\textwidth]{exp/segmentation-acrobot-segments.png}
- \caption{We plot the centroids of the learned segments in \hirl to visualize how \hirl is partitioning the task. Qualitatively, \hirl constructs evenly-spaced way points along the swing up trajectory.  \label{acr-segments}}}
+ \includegraphics[width=0.8\textwidth]{exp/segmentation-acrobot-segments.png}
+ \caption{We plot the centroids of the learned segments in \hirl to visualize how \hirl is partitioning the task. Qualitatively, \hirl constructs evenly-spaced way points along the swing up trajectory.  \label{acr-segments}}
 \end{figure*}
 
 
@@ -188,7 +187,7 @@ The learned reward functions and transition regions are used in the policy learn
 
 \begin{figure}[t]
 \centering
- \includegraphics[width=\columnwidth]{new-exp/exp-acr.png}
+ \includegraphics[width=0.8\columnwidth]{new-exp/acr.png}
  \caption{For a fixed number of demonstrations $5$, we vary the number of rollouts and measure the average reward at each rollout. (QL) denotes Q-learning, (KSVM) denotes a baseline of behavioral cloning with a Kernel SVM policy representation, (IRL) denotes MaxEnt-IRL using linearized dynamics learned from the demonstrations, (SWIRL) denotes SWIRL with local MaxEnt-IRL and estimated linear dynamics, and (SWIRL-MF) denotes the model-free version of SWIRL. SWIRL converges with 2000 fewer rollouts than Q-learning and IRL. \label{exp:acr}}
 \end{figure}
 
@@ -209,7 +208,7 @@ We defer a more formal study of this problem to future work.
 
 \begin{figure}[t]
 \centering
- \includegraphics[width=\columnwidth]{new-exp/acr2.png}
+ \includegraphics[width=0.8\columnwidth]{new-exp/acr2.png}
  \caption{For a number of rollouts $3000$, we vary the number of demonstration trajectories given to each technique. QL) denotes Q-learning, (KSVM) denotes a baseline of behavioral cloning with a Kernel SVM policy representation, (IRL) denotes MaxEnt-IRL using linearized dynamics learned from the demonstrations, (SWIRL) denotes SWIRL with local MaxEnt-IRL and estimated linear dynamics, and (SWIRL-MF) denotes the model-free version of SWIRL. SWIRL is less senstive to the number of demonstrations observed than the SVM. With only 15 demonstrations, SWIRL is able to achieve the maximum reward. In comparison, the SVM requires 250 demonstrations. \label{exp:acr2}}
 \end{figure}
 
@@ -228,7 +227,7 @@ With only 15 demonstrations, SWIRL is able to achieve the maximum reward.
 
 \begin{figure}[t]
 \centering
- \includegraphics[width=\columnwidth]{new-exp/acr2.png}
+ \includegraphics[width=0.8\columnwidth]{new-exp/acr3.png}
  \caption{For a number of rollouts $3000$ and $250$ demonstrations, we measure the transfer as a function of varying the link size. (QL) denotes Q-learning, (KSVM) denotes a baseline of behavioral cloning with a Kernel SVM policy representation, (IRL) denotes MaxEnt-IRL using linearized dynamics learned from the demonstrations, (SWIRL) denotes SWIRL with local MaxEnt-IRL and estimated linear dynamics, and (SWIRL-MF) denotes the model-free version of SWIRL. The KSVM policy fails as soon the link size is changed. SWIRL is robust until the change becomes very large.  \label{exp:acr3}}
 \end{figure}
 
@@ -249,7 +248,8 @@ This is because for the larger link size, \hirl might require different segments
 \begin{figure}[t]
 \centering
     \includegraphics[width=0.8\columnwidth]{exp/IMAG0249.jpg}
-    \caption{The experimental setup for gauze grasping and tensioning. The task is to grasp the gauze and lift it to flatten it out. This task is not usually successful in an open-loop trajectory due to deformation after the grasp.
+    \caption{A sheet of surgical gauze is fixtured at the two far corners using a pair of clips. The unclipped part of the gauze is allowed to rest on soft silicone padding. The robot's task is to reach for the unclipped part, grasp it, lift the gauze, and tension the sheet to be as planar as possible.
+An open-loop policy typically fails on this task because it requires some feedback of whether gauze is properly grasped, how the gauze has deformed after grasping, and visual feedback of whether the gauze is planar.The fiducial markers used to track the gauze are seen in red.
     }
     \label{exp:dvrk2}
 % \vspace{-15pt}
@@ -257,38 +257,63 @@ This is because for the larger link size, \hirl might require different segments
 
 
 \subsection{Physical Experiments with the da Vinci Surgical Robot}
+In the next set of experiments, we evaluate \hirl on two tasks on the da Vinci Surgical Robot.
+The da Vinci Research Kit is a surgical robot originally designed for tele-operation, and we consider autonomous execution of surgical subtasks.
+Based on a chessboard calibration, we found that the robot has an RMSE kinematic error of 3.5 mm, and thus, requires feedback from vision for accurate manipulation. 
+In our robotic setup, there is an overhead endoscopic stereo camera that can be used to find visual features for learning, and it is located 650mm above the workspace.
+This camera is registered to the workspace with a RSME calibration error of 2.2 mm.
 
-\subsubsection{Deformable Sheet Tensioning: } Next, we apply \hirl to learn to how to grasp and tension a sheet of gauze. The experimental setup is pictured in Figure \ref{exp:dvrk2}. The basic setup is a sheet of gauze fixtured at the two far corners. The robot's task to the grasp the gauze on the opposing side, lift it up, and in the process flatten the sheet out.
-This task is not usually successful in an open-loop trajectory due to deformation after the grasp.
-Some grasps pick up more or less of the material and the flattening procedure has to be accordingly modified.
-The state-space is the 6 DoF end-effector position of the robot, the current load on the wrist of the robot, and a visual feature measuring the differences in disparity markers on the sheet (a proxy for flatness).
+\begin{figure*}[t]
+\centering
+    \includegraphics[width=0.8\textwidth]{exp/signals2.png}
+    \caption{A representative demonstration of the deformable sheet tensioning task with relevant features plotted over time. \hirl identifies 4 segments which correspond to reaching, grasping, lifting, and tensioning. 
+    }
+    \label{exp:dvrk3}
+% \vspace{-15pt}
+\end{figure*}
+
+
+\subsubsection{Deformable Sheet Tensioning: } In the first experiment, we consider the task of deformable sheet tensioning. The experimental setup is pictured in Figure \ref{exp:dvrk2}. A sheet of surgical gauze is fixtured at the two far corners using a pair of clips. The unclipped part of the gauze is allowed to rest on soft silicone padding. The robot's task is to reach for the unclipped part, grasp it, lift the gauze, and tension the sheet to be as planar as possible.
+An open-loop policy typically fails on this task because it requires some feedback of whether gauze is properly grasped, how the gauze has deformed after grasping, and visual feedback of whether the gauze is planar.
+The task is sequential as some grasps pick up more or less of the material and the flattening procedure has to be accordingly modified.
+
+The state-space is the 6 DoF end-effector position of the robot, the current load on the wrist of the robot, and a visual feature measuring the flatness of the gauze.
+This is done by a set of fiducial markers on the gauze which are segmented by color using the stereo camera.
+Then, we correspond the segmented contours and estimate a $z$ position for each marker (relative to the horizontal plane).
+The variance in the $z$ position is a proxy for flatness and we include this as a feature for learning (we call this disparity).
 The action space is discretized into an 8 dimensional vector ($\pm x$, $\pm y$, $\pm z$, open/close gripper) where the robot moves in 2mm increments.
 
-We provided 15 demonstrations through a keyboard based tele-operation interface.
+We provided 15 demonstrations through a keyboard-based tele-operation interface.
+The average length of the demonstrations was 48.4 actions (although we sampled observations at a higher frequency about 10 observations for every action).
 From these 15 demonstrations, \hirl identifies four segments. Figure \ref{exp:dvrk3} illustrates the segmentation of a representative demonstration with important states plotted over time.
-In this problem, we applied both the model-based and model-free versions of \hirl to construct the rewards.
 One of the segments corresponds to moving to the correct grasping position, one corresponds to making the grasp, one lifting the gauze up again, and one corresponds to straightening the gauze.
+One of the interesting aspects of this task is that the segmentation requires multiple features.
+Figure \ref{exp:dvrk3} plots three signals (current load, disparity, and z position), and segmenting any single signal may miss an important feature. 
 
-We can use the reward functions learned by \hirl to refine the policy for this task.
-We define a Q-Network with a single-layer Multi-Layer Perceptron with 32 hidden units.
+Then, we tried to learn a policy from the rewards constructed by \hirl.
+In this experiment, we initialized the policy learning phase of \hirl with the Behavioral Cloning policy.
+We define a Q-Network with a single-layer Multi-Layer Perceptron with 32 hidden units and sigmoid activation.
 For each of the segments, we apply Behavioral Cloning locally with the same architecture as the Q-network (with an additional softmax over the output layer) to get an initial policy. We rollout 100 trials with an $\epsilon=0.1$ greedy version of these segmented policies.
-The learning results of this experiment are summarized below with different variations of the learning algorithms.
+
+
+The learning results of this experiment are summarized below with different baselines.
 The value of the policy is a measure of average disparity over the gauze accumulated over the task (if the gauze is flatter longer, then the value is greater).
 As a baseline, we applied RL for 100 rollouts with no other information. RL did not successfully grasp the gauze even once.
 Next, we applied behavioral cloning (BC) directly.
-BC was only able to reach the gauze and distrub it but not succesfully grasping.
+BC was able to reach the gauze and but not successfully grasping it.
 Then, we applied the segmentation from \hirl  and applied BC directly to each local segment (without further refinement). 
-This was able complete the full task.
-Finally, we applied all of \hirl and found the highest-value results.
+This was able complete the full task with a cumulative disparity score of $-3516$.
+Finally, we applied all of \hirl and found the highest-value results ($-2241$ 36\% relative improvement).
 For comparison, we applied \hirl without the BC initialization and found that it was only successful at the first two steps.
+This indicates that in real tasks the initialization is crucial.
 
 % Please add the following required packages to your document preamble:
 % \usepackage[table,xcdraw]{xcolor}
 % If you use beamer only pass "xcolor=table" option, i.e. \documentclass[xcolor=table]{beamer}
-\begin{table}[]
+\begin{table}[ht]
 \centering
 \scriptsize
-\caption{Results from the deformable sheet grasping experiment}
+\caption{Results from the deformable sheet tensioning experiment}
 \label{my-label}
 \begin{tabular}{llll}
 \rowcolor[HTML]{000000} 
@@ -297,31 +322,16 @@ RL (ab initio)                   & -                                        & 10
 BC                               & 15                                       & -                                  & -7591                        \\
 Segmentation+BC                  & 15                                       & -                                  & -3516                        \\
 SWIRL+MF (no init)                  & 15                                       & 100                                & -6128                        \\
-SWIRL+MB (no init)                  & 15                                       & 100                                & -5798                        \\
+SWIRL+IRL (no init)                  & 15                                       & 100                                & -5798                        \\
 \textbf{SWIRL+MF (BC init)}                  & 15                                       & 100                                & \textbf{-3110}     \\
-\textbf{SWIRL+MB (BC init)}                  & 15                                       & 100                                & \textbf{-2241}                       
+\textbf{SWIRL+IRL (BC init)}                  & 15                                       & 100                                & \textbf{-2241}                       
 \end{tabular}
 \end{table}
 
 
-
-\begin{figure}[t]
-
-    \includegraphics[width=\columnwidth]{exp/signals.png}
-    \raggedright
-    \includegraphics[width=0.9\columnwidth]{exp/segmentation.png}
-    \caption{A representative demonstration of the deformable sheet grasping task with relevant features plotted over time. \hirl identifies 4 segments when applied to the deformable sheet grasping task. 
-    }
-    \label{exp:dvrk3}
-% \vspace{-15pt}
-\end{figure}
-
-
-
-
 \subsubsection{Surgical Line Cutting: }
 In the next experiment, we evaluate generalization to different task instances.
-We apply \hirl to learn to cut along a marked line in gauze similar to Murali et al.~\cite{murali2015learning}.
+We apply \hirl to learn to cut along a marked line in gauze similar to ~\cite{murali2015learning}.
 This is a multi-step problem where the robot starts from a random initial state, has to move to a position that allows it to start the cut, and then cut along the marked line.
 We provide the robot 5 kinesthetic demonstrations by positioning the end-effector and then following various marked straight lines.
 The state-space of the robot included the end-effector position $(x,y)$ as well as a visual feature indicating its pixel distance to the marked line $(pix)$.
@@ -334,7 +344,6 @@ The learned reward function for the position step minimizes $x,y,pix$ distance t
 We defined task success as positioning within $1$\,cm of the starting position of the line and during the following stage, missing the line by no more than $1$\,cm (estimated from pixel distance).
 We evaluated the model-free version of \hirl, Q-Learning, and Behavioral Cloning with an SVM.
 \hirl was the only technique able to achieve the combined task.
-This is because the policy for this task is non-stationary, and \hirl is the only approach of the alternatives that can learn such a policy.
 
 We evaluated the learned tracking policy to cut gauze.
 We ran trials on different sequences of curves and straight lines. 
@@ -381,13 +390,13 @@ Out of the 15 trials, 11 were successful.
     straight & 0.46 & 0.23 & 0.42 & 0.21  \\
     \rowcolor[HTML]{E0E0E0} 
     4.0 & 0.43 & 0.59 & 0.45 & 0.33 \\
-    3.5 & 0.51 & {\color{red}\textbf{1.21}} & 0.56 & 0.38 \\
+    3.5 & 0.51 & 1.21 & 0.56 & 0.38 \\
     \rowcolor[HTML]{E0E0E0} 
-    3.0 & 0.86 & {\color{red}\textbf{3.03}} & 0.66 & 0.57 \\
-    2.5 & {\color{red}\textbf{1.43}} & {\color{red}-} & 0.74 & 0.87 \\
+    3.0 & 0.86 & 3.03 & 0.66 & 0.57 \\
+    2.5 & 1.43 & {\color{red}-} & 0.74 & 0.87 \\
     \rowcolor[HTML]{E0E0E0} 
-    2.0 & {\color{red}}- & {\color{red}}- & 0.87 & {\color{red}\textbf{1.45}} \\
-    1.5 & {\color{red}}- & {\color{red}}- & {\color{red}\textbf{1.12}} & {\color{red}\textbf{2.44}} \\
+    2.0 & - & - & 0.87 & 1.45 \\
+    1.5 & - & - & 1.12 & 2.44 \\
      \hline
     \end{tabular}
     }
@@ -400,5 +409,6 @@ Table \ref{dvrk:res1} summarizes the results on lines of various curvature.
 While the SVM approach did not work on the combined task, we evaluated its accuracy on each individual step to illustrate the benefits of \hirl.
 On following straight lines, SVM was comparable to \hirl in terms of accuracy.
 However, as the lines become increasingly curved, \hirl generalizes more robustly than the SVM.
+A single SVM has to learn both the positioning and cutting policies. The combined policy is much more complicated than the individual policies, e.g., go to a  goal and follow a line.
 
 

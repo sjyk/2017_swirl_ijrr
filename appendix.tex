@@ -1,146 +1,96 @@
 \section{Appendix}
 
-\subsection{Sequence of Stable Feedback Controllers}\label{sec:appendix1}
-The proposed model naturally arises from a system controlled with linear state feedback controllers to the centroids of the $k$ target regions $[\rho_1,...,\rho_k]$. 
-In the Transition State model,  $[\rho_1,...,\rho_k]$ are defined as the sublevel sets of multivariate Gaussian distributions.
-For each of the Gaussian mixture components, let $[\mu_1,...,\mu_k]$ denote the respective expectations and $[\Sigma_1,...,\Sigma_k]$ denote the respective covariances.
-We can show that the Transition State Clustering model naturally follows from of a sequence of stable linear full-state feedback controllers sequentially controlling the system to each $\mu_i$ (up-to some tolerance defined by $\alpha$).
+\subsection{Supplemental Experiments}
+We present a simplified GridWorld example to illustrate the structure of tasks amenable to segmentation. 
 
-Suppose, we model the agent's trajectory in feature space as a linear dynamical system with a fixed dynamics.
-Let $A_r$ model the agent's linear dynamics and $B_r$ model the agent's control matrix:
-\[
-\mathbf{x}(t+1) = A_r\mathbf{x}(t) + B_r\mathbf{u}(t) + W(t).
-\]
-For a particular mixture component $i$, the agent applies a linear feedback controller with gain $C_i$, regulating around the target state $\mu_i$.
-This can be represented as the following system (by setting $u(t)=-C_i\hat{\mathbf{x}}$):
-\[
-\hat{\mathbf{x}}(t) = \mathbf{x}(t) - \mu_i.
-\]
-\[
-\hat{\mathbf{x}}(t+1) = (A_r-B_rC_i)\hat{\mathbf{x}}(t)+ W(t).
-\]
-If this system is stable, it will converge to the state $\hat{\mathbf{x}}(t) = \mathbf{0}$ which is  $\mathbf{x}(t) = \mu_i$ as $t \rightarrow \infty$.
-However, since this is a finite time problem, we model a stopping condition, namely, the system is close enough to $\mathbf{0}$.
-For some $z_\alpha$ (e.g., in 1 dimension 95\% quantiles are $Z_{5\%} = 1.96$):
-\[
-\hat{\mathbf{x}}(t)^T \Sigma^{-1}_i \hat{\mathbf{x}}(t) \le z_\alpha.
-\]
-If the agent's trajectory was modeled as a sequence $1...K$ of such controllers, we would observe the Transition State Clustering model with each $A_i = A_r-B_rC_i$, and the clusters would be an estimate of the $(\mu_i, \Sigma_i)$.
+\vspace{0.5em} \noindent \textbf{Motivating Experiments: } Before we discuss segmentation, the first hypothesis that we have to evaluate is whether IRL on its own can improve the convergence of RL. This hypothesis is not unreasonable since some problem have a naturally sparse reward function (e.g., 1 if a goal state is reached, 0 else where), and IRL would approximate this reward with a smoother quadratic function. So consider an 16 x 16 GridWorld with a start position in one corner and a goal in another corner (Figure \ref{concept:1}a). 
+The agent can move left, right, up, and down, and with a 30\% probability the action results in a random motion.
+We sampled 5 demonstrations with a value iteration supervisor and applied IRL with linear and quadratic rewards. These results are visualized in (Figure \ref{concept:1}b-c).
+These plots illustrate how IRL can be used to shape a reward function, by changing the reward parametrization. Even though the underlying reward function is a sparse 1/0 reward,  MaxEnt fits a linear or a quadratic reward function, which is smoother. These smoother reward functions can help guide the agent to the goal.
 
-\subsection{Mixture Models And Linear Systems}\label{sec:appendix2}
-Using a GMM to detect switches in local linearity is an approximate algorithm that has been applied in a number of prior works~\cite{moldovan2013dirichlet,calinon2014task, khansari2011learning}.
-This is akin to a using a Gaussian kernel for kernelized change point detection~\cite{harchaoui2009kernel}.
-We provide some intuition on why this model is sensible for our application.
+\begin{figure}[ht]
+\centering
+ \includegraphics[width=0.48\columnwidth]{concept/1.png}
+  \includegraphics[width=0.48\columnwidth]{concept/2.png}
+ \caption{(A) Tabular Q-Learning converges nearly 8x faster when the reward is quadratically shaped by IRL. (B) These benefits are even more pronounced when the Q function is approximated by a linear regression model. \label{concept:2}}
+\end{figure}
 
-Consider the following dynamical system:
-\[
-x_{t+1} = f(x_{t}) + w_{t}
-\]
-where $w_{t}$ is unit-variance i.i.d Gaussian noise $N(0,I)$.
-Let us first focus on linear systems.
-If $f$ is linear, then the problem of learning $f$ reduces to linear regression:
-\[
-\arg\min_{A} \sum_{t=1}^{T-1} \|Ax_{t} - x_{t+1}\|.
-\]
-Alternatively, we can think about this linear regression probabilistically.
-Let us first consider the following proposition:
+\begin{figure}[ht]
+\centering
+ \includegraphics[width=0.32\columnwidth]{concept/swirl1-rewards.png}
+  \includegraphics[width=0.32\columnwidth]{concept/swirl1-linear.png}
+   \includegraphics[width=0.32\columnwidth]{concept/swirl1-quadratic.png}
+ \caption{This plot illustrates a conceptual GridWorld task. The green square denotes the starting position and the red denotes the target. The first plot shows the basic task, the second plot shows the reward learned with IRL from 5 demonstrations with a linear reward parametrization, and the second plot shows the reward learned with a quadratic parametrization. \label{concept:1}}
+\end{figure}
 
-\vspace{0.75em}
+If we were to compare the convergence of RL on the 1/0 reward and the quadratic reward, we find vastly different convergence properties.
+We use a tabular Q-Learning agent with an $\epsilon$-greedy exploration policy ($\epsilon=0.1$).
+Q-Learning on the quadratic reward converges in nearly 8x fewer steps than the 1/0 reward (Figure \ref{concept:2}a).
+This is because the Q-Learning agent with the shaped reward function observes a reward earlier than the 0/1 agent, and thus, it is able to make progress towards the goal earlier in the learning process.
+Combining function approximation with Q-Learning allows it to generalize to nearby unseen states.
+The effects are even more pronounced since now once the agent observes the ``right direction'' to travel due to the shaped reward it is able to quickly make progress (Figure \ref{concept:2}b).
+In the following experiments, we will use the term \textsf{IRL} to refer to the combined IRL+RL policy inference procedure.
 
-\begin{proposition}
-Consider the one-step dynamics of a linear system.
-Let $x_{t} \sim N(\mu, \Sigma)$, then $\binom{x_{t}}{x_{t+1}}$ is a multivariate Gaussian.
-\end{proposition}
-\begin{proof}
-This follows from the fact that $x_{t+1}$ can be expressed as a linear combination of independent multivariate Gaussian random variables.
-\end{proof}
+\begin{figure}[t]
+\centering
+ \includegraphics[width=0.48\columnwidth]{concept/3.png}
+  \includegraphics[width=0.48\columnwidth]{concept/4.png}
+ \caption{(A) Given 5 expert demonstrations, Behavioral Cloning with a Random Forest classifier achieves a high reward on the same task. This can be used to initialize the Q-Learning agents. On the same task there is a marginal benefit to IRL. (B) We perturb the task after collecting 5 demonstrations by adding an obstacle blocking the shortest path, and find that the IRL agent is the most effective.  \label{concept:3}}
+\end{figure}
 
-\vspace{0.5em}
+One could hand-craft such reward functions, but one advantage of IRL is that it learns such functions from demonstration data. Admittedly, the previous comparison with RL is not completely fair. The RL algorithm with the 1/0 reward does not use the demonstration data. In principle, one could train a policy with Behavioral Cloning and use that to initialize the RL agent. Given the same 5 initial demonstrations, we train a random forest classifier.
+When we apply this policy to the same task instance where the demonstrations were collected, the behavioral cloning policy does very well (Figure \ref{concept:3}a).
+This can be used as an initialization to the Q-learning agent, which can further improve the policy.
+On the same task instance, there is a marginal benefit to using IRL to shape the reward--as the behavioral cloning policy already gets the agent very close to the goal in most cases.
 
-Following from this idea, if we let $p$ define a distribution over $x_{t+1}$ and $x_{t}$:
-\[
-p(x_{t+1},x_{t}) \sim Normal
-\]
-For multivariate Gaussians the conditional expectation is a linear estimate, and we can see that it is equivalent to the regression above:
-\[
-\arg\min_{A} \sum_{t=1}^{T-1} \|Ax_{t} - x_{t+1}\| = \mathbf{E}[x_{t+1} \mid x_{t}].
-\]
+However, suppose that demonstration domain slightly differs from the execution domain. We simulate this by adding a 4x4 obstacle in the center of the GridWorld map.
+Now, the learned behavioral cloning policy is not effective on the new domain (Figure \ref{concept:3}b).
+However, the reward function learned with IRL transfers more robustly.
+Furthermore, combining the IRL with a BC initialization improves performance over RL by 6x.
+These results motivate us to consider how to use demonstrations to improve the convergence of RL.
+In more complex tasks, a quadratic approximation of the reward may not suffice.
+Hence, we consider how to segment the task into sub-tasks that can be approximated with a quadratic reward.
 
-The GMM model allows us to extend this line of reasoning to consider more complicated $f$.
-If $f$ is non-linear $p$ will almost certainly not be Gaussian.
-However, GMM models can model complex distributions in terms of Gaussian Mixture Components:
-\[
-p(x_{t+1},x_{t}) \sim GMM(k)
-\]
-where $k$ denotes the number of mixture components.
-The interesting part about this mixture distribution is that locally, it models the dynamics as before.
-Conditioned on particular Gaussian component $i$ the conditional expectation is:
-\[
-\mathbf{E}[x_{t+1} \mid x_{t}, i \in 1...k].
-\]
-As before, conditional expectations of Gaussian random variables are linear, with some additional weighting $\phi(i \mid x_{t},x_{t+1})$:
-\[
-\arg\min_{A_i} \sum_{t=1}^{T-1} \phi(i \mid x_{t},x_{t+1}) \cdot \|A_ix_{t} - x_{t+1}\|.
-\]
-Every tuple $(x_{t+1},x_{t})$ probability $\phi(i \mid x_{t},x_{t+1})$ of belonging to each $i$th component, and this can be thought of as a likelihood of belonging to a given locally linear model.
 
-\subsection{Alternative Approaches}
-We consider the following alternative approaches to compare against \hirl. 
+\begin{figure}[t]
+\centering
+ \includegraphics[width=\columnwidth]{concept/swirl-rewards.png}
+ \caption{(A) A GridWorld domain with an obstacle, (B) Visualization of the reward function if we apply IRL to 5 demonstrations and fit a quadratic reward. The quadratic reward can encourage the agent to get ``stuck'' in the obstacle if it is too greedy, (C) Segmented quadratic reward function learned with \hirl. The function has two components first guiding the agent to the passage on the left, and then guiding to the goal.  \label{concept:4}}
+\end{figure}
 
-\subsubsection{RL}
-This approach considers no segmentation and no history. It directly applies forward RL to the apparent state-space and uses a distance-to-goal reward function.
+\begin{figure}[t]
+\centering
+ \includegraphics[width=0.6\columnwidth]{concept/2-1.png}
+ \caption{\hirl converges faster than a single quadratic reward or the 1-0 reward. \label{concept:5}}
+\end{figure}
 
-\subsubsection{Sliding Window}
-This approach considers no segmentation but includes a sliding window of $k$ previous states in the state-space. It directly applies forward RL to the augmented state-space and uses a distance-to-goal reward function.
 
-\subsubsection{IRL}
-This approach uses MaxEnt-IRL to learn a reward function without segmentation and requires $N=5$ demonstrations. We apply forward RL to the learned reward function. 
+\vspace{0.5em} \noindent \textbf{Hypothesis 0. IRL Can Benefit From Segmentation: } Now, we make the domain above slightly more complicated. We add an obstacle in such a way that the straight-line path is no longer optimal (Figure \ref{concept:4}a). As before, we sample 5 demonstrations from a value iteration supervisor.
+Qualitatively, the quadratic reward learned from IRL is misleading as it can guide an overly greedy agent into the obstacle(Figure \ref{concept:4}b). 
+\hirl learns a two-segment reward, where first it guides the agent to a point in the left passage and then a reward around the goal (Figure \ref{concept:4}c).
+The number of segments was determined by a Dirichlet process prior as described in the text.
 
-\subsubsection{Endpoint Model}
-This is a simplified approach to construct rewards using the learned $G$.
-Let $\{\mu_1,...,\mu_k\}$ be the set of all of the means of $G$ learned with the algorithm in the previous section.
-These means are in the feature space $\mathbb{R}^p$.
-Let $\gamma$ denote the current progress of the task, i.e., the previously achieved goal  + 1. 
-We can define a reward function as follows:
-\[
-R(s,a) = -\|f(s,a) - \mu_{\gamma}\|_2^2 
-\]
+To evaluate \hirl quantitatively, we use a tabular Q-learning agent to learn a policy using these rewards.
+To control for initialization effects, the agents were initialized randomly (unlike the previous experiment) and used an $\epsilon=0.1$ exploration policy.
+This results in a significant improvement in convergence as seen in Figure \label{concept:5}.
 
-\subsection{Counter-examples}
-We constructed two scenarios, a Maze and a Pinball domain, in which \hirl actually performs worse than the alternatives. In the Maze domain, there is a 2D grid with a single unique solution path to a goal state.
-In this problem, the segments found by \hirl provide no additional information compared to IRL.
-In the Pinball domain, there is a ball on a table with obstacles that is moved by tilting the table.
-The ball has elastic collisions with the obstacles and has noisy dynamics.
-In this domain, we find that \hirl tends to over-segment this problem since every collision results in another linear regime. 
+\begin{figure}[t]
+\centering
+ \includegraphics[width=0.48\columnwidth]{concept/3-1.png}
+  \includegraphics[width=0.48\columnwidth]{concept/3-2.png}
+ \caption{(A) We measure the sensitivity to the number of initial demonstrations, (B) We perturb the execution environment by adding random obstacles. \label{concept:6}}
+\end{figure}
 
-\begin{table}[ht]
-\scriptsize
-    \centering
-    \begin{tabular}{|r|r|r|r|r|}
-    \hline
-         %&  \multicolumn{2}{c|}{2D-MP-2}& %\multicolumn{2}{c|}{Two-Rooms} & 
-         &\multicolumn{2}{c|}{Maze}& %\multicolumn{2}{c|}{RC(FO)}
-         %& \multicolumn{2}{c|}{RC(PO)}& %\multicolumn{2}{c|}{Acrobot} & 
-         \multicolumn{2}{c|}{Pinball}\\
-    \hline
-       & Max & AUC & Max & AUC\\
-    \hline
-        RL &  $\mathbf{0.960}$ & $2.575$& $0.481$ &$6.941$\\
-    %\hline
-    %    Sliding & $0.924$ & $-0.855$ & $0.242$ &$1.042$\\
-    \hline
-        IRL & $0.914$ & $\mathbf{3.575}$ & $0.424$ &$\mathbf{10.904}$\\
-    \hline
-        TSC+Endpoints & $0.944$ & $-0.448$&  $\mathbf{0.793}$ & $9.315$\\
-    \hline
-        \hirl & $0.924$ & $1.448$ & $0.722$ &$8.331$\\
-    \hline
-   % \hline
-%        Perfect+Endpoints & - &-& $0.884$ & $34.236$\\
-%    \hline
-%        Perfect+\hirl & - & -& $0.934$ & $57.129$\\
-%    \hline
-    \end{tabular}
-    \caption{This table summarizes the convergence rate and max reward attained by a Q-learning agent using different reward and state-space representations on domains that were constructed to be counter-examples. \hirl does not perform as well in domains where there is a single path to the goal state. In this case, IRL finds the path and the additional states added by \hirl can actually impede convergence. }
-    \label{tab:my_label}
-\end{table}
+\vspace{0.5em} \noindent \textbf{Parameter Sensitivity: } Finally, we use the previous GridWorld environment to illustrate the sensitivity to different parameters. In Figure \ref{concept:6}a, we vary the number of initial demonstrations provided to IRL and Behavioral Cloning and measure the performance after 1500 rollouts.
+IRL is not as sensitive to the number of demonstrations as BC.
+This is because the reward function that IRL is estimating is much simpler than policy function.
+Next, we evaluate each of the algorithms on their ability to generalize to different task instances.
+We perturb the execution environment by randomly adding single grid point obstacles.
+We average the results over 50 such random perturbations (Figure \ref{concept:6}b).
+
+Not surprisingly, we find that IRL is the most robust.
+\hirl is relatively robust but is slightly worse than IRL for a large number of random obstacles.
+We wanted to understand why \hirl was less robust than standard IRL, so we manually set the number of segments in \hirl to $4$.
+The performance of \hirl with 4 segments is much worse.
+This is because obstacles can ``invalidate'' segments.
+This suggests an interesting tradeoff where more segments can serve to more precisely guide the agent towards the goal, but less segments lead to improved generalization.

@@ -75,13 +75,18 @@ Ken Goldberg%,
 \begin{abstract}
 Inverse Reinforcement Learning (IRL) is a technique to learn a reward function that best explains a supervisor's behavior.
 These reward functions can be used to find policies for new instances of a task.
-However, in multi-step tasks, the learned rewards might be delayed and hard to directly optimize.
+However, in multi-step tasks, the learned rewards might be delayed and hard to directly optimize with Reinforcement Learning (RL).
 One approach is to segment the task into shorter sub-tasks and learn local reward functions.
 We present \hirlfull (\hirl), a three-phase algorithm that automatically partitions a task into shorter-horizon sub-tasks based on transitions that occur consistently across demonstrations.
-\hirl then learns a sequence of local reward functions using Maximimum Entropy Inverse Reinforcement Learning. 
+\hirl then learns a sequence of local reward functions using Maximum Entropy Inverse Reinforcement Learning. 
 Once these reward functions are learned, \hirl applies Q-learning to compute a policy that maximizes the rewards. 
-We evaluate \hirl in a two simulated control tasks, parallel parking and a two-link pendulum, and two physical experiments using the da Vinci surgical robot, tensioning and cutting deformable sheets.
-Our results suggest that \textbf{TODO}
+
+Our experiments evaluate the tradeoff between RL rollouts and learning from expert demonstrations.
+While pure RL is the most general approach and can adapt to any new scenario, it can require a large amount of exploration. On the other hand, imitation learning approaches like Behavioral Cloning require no rollouts but may not transfer to perturbations of their training environment.
+\hirl utilizes both expert demonstrations and rollouts to reduce the sample-complexity of exploration, while retaining some ability to transfer to new scenarios.
+We evaluate \hirl in a two simulated control tasks, a parallel parking and a two-link pendulum, and two physical experiments using the da Vinci surgical robot, tensioning and cutting deformable sheets.
+On the parallel parking task, SWIRL achieves the maximum reward on the task with 85\% fewer rollouts than Q-Learning, and 33\% fewer rollouts than Q-Learning where the rewards were shaped by IRL. 
+On the deformable tensioning task, \hirl achieves a 36\%  relative  improvement in reward compared to a baseline of behavioral cloning with segmentation.
 \end{abstract} 
 
 \maketitle
@@ -110,7 +115,8 @@ affiliation with the AMP Lab, BAIR, and the CITRIS "People and Robots" (CPAR) In
 \bibliographystyle{SageH}
 \bibliography{deepP2P,gmm,gmm2,gmm3}
 
-%\appendix
-%\input{appendix.tex}
+\clearpage
+\appendix
+\input{appendix.tex}
 
 \end{document}

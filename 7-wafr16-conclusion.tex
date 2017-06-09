@@ -1,12 +1,13 @@
 \section{Discussion and Future Work}
-\textbf{SK. TODO revise}
-\hirl is a three-phase algorithm that first segments a task, learns local rewards, and then learns a policy.
+This paper explores a new algorithm \hirl for segmenting tasks into shorter sub-tasks and assigning local reward functions.
 Experimental results suggest that sequential segmentation can indeed improve convergence in RL problems with delayed rewards.
 Results suggest that \hirl is robust to perturbations in initial conditions, the environment, and sensing noise.
-This paper formalizes the interaction and composability of the three phases (sequence, reward, and policy learning). In future work, we will explore extensions to each of the phases and quantify the degree of generalization.
-We will explore how the Q-Learning step could be replaced with Guided Policy Search, Policy Gradients, and optimal control.
-We will modify the segmentation algorithm to incorporate more complex transition conditions and allow for sub-optimal demonstrations.
-We will explore more robotic tasks including suturing, surgical knot tying, and assembly.
-Another avenue for future work is modeling complex tasks as hierarchies of MDPs.
+There are several limitations and  avenues for future work that we would like to address:
 
-% Another avenue for future work is modeling complex tasks as hierarchies of MDPs, namely, tasks composed of multiple MDPs that switch upon certain states and the switching dynamics can be modeled as another MDP. 
+\vspace{0.25em}\noindent \textbf{High-dimensional state-spaces: } As is, \hirl will have difficulty scaling to problems with high-dimensional state-spaces, such as images. Most IRL algorithms require some estimate of the dynamics model, which is difficult in general. We believe that some combination of pre-trained features and the model-free reward learning approach proposed in this paper will be a first step towards \hirl in image space.
+
+\vspace{0.25em}\noindent \textbf{Avoiding RL: } Another intriguing direction is whether we can avoid the last phase  of reinforcement learning. It might be possible to design a policy learning framework that implicitly solves an IRL problem. This would open a number of opportunities in incorporating segmentation, IRL, and policy learning as one probabilistic model.
+We will also explore how the Q-Learning step could be replaced with Guided Policy Search, Policy Gradients, and optimal control.
+
+
+\vspace{0.25em}\noindent \textbf{More Complex Task Structure: } Another avenue for future work is modeling complex tasks as hierarchies of MDPs, namely, tasks composed of multiple MDPs that switch upon certain states and the switching dynamics can be modeled as another MDP. This is related to the options framework in hierarchical RL, and we will explore the connections between \hirl and more complex hierarchies of behaviors.

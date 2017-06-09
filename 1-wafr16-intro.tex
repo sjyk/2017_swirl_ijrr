@@ -1,32 +1,31 @@
 \section{Introduction}
 An important problem in robot learning is defining a reward function that accurately reflects a robot's ability to perform a task.
-However, in many cases, the most natural reward function is delayed, where the consequences of an action are only observed long after it is taken.
+However, in many cases, the natural reward function for a task is delayed, where the consequences of an action are only observed long after it is taken.
 Such reward functions are difficult to directly optimize with exploration-based techniques like Reinforcement Learning (RL).
-For example, in a multi-step assembly task, one might have classifier that can determine if the full part is correctly assembled.
+For example, in a multi-step assembly task, one might have a classifier that can determine if the full part is correctly assembled.
 In this problem, RL would have to rely on random exploration to achieve the assembled state by chance at least once, before it can learn a more efficient policy.
 
 One approach is to use expert demonstrations to learn a smoother reward function that gives the robot a stronger reward signal at intermediate steps.
 This idea is related to \emph{apprenticeship learning}~\citep{DBLP:conf/nips/KolterAN07, coates2008learning, abbeel2004apprenticeship}.
 In apprenticeship learning, a supervisor provides a small number of initial demonstrations, and there is a two-phase approach that first applies Inverse Reinforcement Learning (IRL) to infer the supervisor's implicit reward function, and then optimizes for this reward function using RL.
-We explore whether we can leverage the same basic apprenticeship learning framework to learn reward functions for tasks with a sequence of state-space sub-goals that must be reached in a specific order.
+We explore whether we can leverage the same basic apprenticeship learning framework to learn reward functions for tasks with a sequence of state-space sub-goals that must be reached.
 
-We take inspiration from Learning from Demonstration results that use trajectory segmentation, where demonstrations are partitioned into sub-sequences~\citep{argall2009survey}.
-Segmentation facilitates learning localized control policies~\citep{murali2015learning, niekum2012learning, konidaris2011robot}, adaptation to unseen scenarios~\citep{ijspreet2002learning, ude2010task}, and demonstrator skill-assessment~\citep{reiley2010motion, gao2014jigsaws}.
-Often these segments are manually designed or derived from a dictionary of motion primitives, but recently there are several approaches for learning segmentation criteria automatically by identifying locally similar structure in demonstration data~\citep{barbivc2004segmenting, chiappa2010movement,  alvarez2010switched,calinon2010learning, kruger2012imitation, niekum2012learning, wachter2015hierarchical, lee2015autonomous}.
+Segmentation is a well-studied problem, and it facilitates learning localized control policies~\citep{murali2015learning, niekum2012learning, konidaris2011robot}, adaptation to unseen scenarios~\citep{ijspreet2002learning, ude2010task}, and demonstrator skill-assessment~\citep{reiley2010motion, gao2014jigsaws}.
+Often these segments are manually designed or derived from a dictionary of motion primitives, but recently, there are several approaches for learning segmentation criteria automatically by identifying locally similar structure in demonstration data~\citep{barbivc2004segmenting, chiappa2010movement,  alvarez2010switched,calinon2010learning, kruger2012imitation, niekum2012learning, wachter2015hierarchical, lee2015autonomous}.
 While prior work has mostly considered segmentation to reduce the complexity of deterministic planning problems, this paper explores how segmentation can inform reward derivation in the Markov Decision Process setting.
 
 We model a task as a sequence of quadratic reward functions $\mathbf{R}_{seq}=[R_1,...,R_k]$ and transition regions (ellipsoidal subsets of the state-space) $G = [\rho_1, ...,\rho_k]$ such that $R_1$ is the reward function until $\rho_1$ is reached, after which $R_2$ becomes the reward and so on.
 We assume that we have access to a supervisor that provides demonstrations that are optimal w.r.t an unknown $\mathbf{R}_{seq}$, and reach each $\rho \in G$ (also unknown) in the same sequence. 
 \hirlfull (\hirl) is an algorithm to recover $\mathbf{R}_{seq}$ and $G$ from the demonstration trajectories.
 \hirl applies to tasks with a discrete or continuous state-space and a discrete action-space.
-The state space can represent spatial, kinematic, or sensory states (e.g., visual features), as long as the trajectories in these state-space are smooth and not very high-dimensional.
+The state space can represent spatial, kinematic, or sensory states (e.g., visual features), as long as the trajectories are smooth and not very high-dimensional.
 The discrete actions are not a fundamental restriction, but relaxing that constraint is deferred to future work.
 Finally, $\mathbf{R}_{seq}$ and $G$ can be used in an RL algorithm to find an optimal policy for a task.
 
 \hirl segments the demonstrations using a variant of a segmentation algorithm proposed in our prior work~\citep{krishnan2015tsc,murali2016}, called Transition State Clustering (TSC).
-TSC identifies locally similar dynamical segments in a trajectory and fits a Gaussian Mixture Model to the end-points of the segments to learn a model to determine when and where a segment terminates.
+TSC identifies locally similar dynamical segments in a trajectory and fits a Gaussian Mixture Model to the endpoints of the segments to learn a model to determine when and where a segment terminates.
 While our original motivation was to improve the robustness of kinematic segmentation algorithms by pruning sparse clusters, TSC can also be interpreted as inferring the subtask transition regions $G$.
-\hirl extends TSC by: (1) formalizing a broader class of Markov segmentation algorithms that apply to the IRL setting where TSC is a special case, and (2) combining TSC with a kernel embedding to handle certain types of non-linearities and discontinuities in the state-space.
+\hirl extends TSC by (1) formalizing a broader class of Markov segmentation algorithms that apply to the IRL setting where TSC is a special case, and (2) combining TSC with a kernel embedding to handle certain types of non-linearities and discontinuities in the state-space.
 Once the segments are found, \hirl applies Maximum Entropy Inverse Reinforcement Learning~\citep{DBLP:conf/aaai/ZiebartMBD08} to each set of segments to find $\mathbf{R}_{seq}$.
 
 Learning a policy from $\mathbf{R}_{seq}$ and $G$ is nontrivial because solving $k$ independent problems neglects any shared structure in the value function during the policy learning phase (e.g., a common failure state).
@@ -35,15 +34,15 @@ Learning a memory-dependent policy could lead to an exponential overhead of addi
 \hirl exploits the fact that TSC is a Markov segmentation algorithm and shows that the problem can be posed as a proper MDP in a lifted state-space that includes an indicator variable of the highest-index $\{1,...,k\}$ transition region that has been reached so far.
 
 The basic model follows from a special case of Hierarchical Reinforcement Learning~\citep{suttonPS99}.
-In hierarchical reinforcement learning, multi-step skills are composed of local policies called ``options''. Each option executes until a termination condition and a meta-policy selects the next option to execute.
+In hierarchical reinforcement learning, multi-step skills are composed of local policies called ``options''. Each option executes until a termination condition, and a meta-policy selects the next option to execute.
 \hirl is an IRL framework for inferring termination conditions ($G$) and local reward functions that guide the agent to these termination states $\mathbf{R}_{seq}$, where the meta-policy is deterministic and sequential.
 
 
 In summary, our contributions are:
 \begin{enumerate}
 \item We describe a model for sequential robot tasks, where rewards sequentially switch upon arrival in a transition region, and an IRL algorithm called \hirlfull to infer the rewards and transitions from demonstrations. The algorithm has three phases: segmentation, inverse reinforcement learning, and policy learning.
-\item We describe a class of segmentation algorithms, Markov segmentation algorithms, which can be used to partition a task. Transition State Clustering is one such algorithm and we describe extensions that account for non-linearities and discontinuities. For this class of segmentation algorithms, policy learning can be efficiently done on an augmented state-space with indicators tracking the previously reached segments.
-\item We apply \hirl to two simulated control tasks, a noisy non-holonomic car and a two-link pendulum, and two physical experiments on the da Vinici surgical robot.
+\item We describe a class of segmentation algorithms, Markov segmentation algorithms, which can be used to partition a task. Transition State Clustering is one such algorithm, and we describe extensions that account for non-linearities and discontinuities. For this class of segmentation algorithms, policy learning can be efficiently done on an augmented state-space with indicators tracking the previously reached segments.
+\item We apply \hirl to two simulated control tasks, a noisy non-holonomic car and a two-link pendulum, and two physical experiments on the da Vinci surgical robot.
 \end{enumerate}
 
 

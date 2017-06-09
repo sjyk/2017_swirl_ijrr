@@ -17,10 +17,15 @@ Trivially, some algorithms are not causal since they might require knowledge of 
 Even if the algorithm is causal, it might have an arbitrary dependence on the past leading to inefficient estimation of the currently active segment.
 To address this problem, we formalize the following condition:
 
-\begin{definition}[Markov Segmentation]
-A Markov segmentation function is a task segmentation where the segmentation index of time $t+1$ can be completely determined by the state at time $t$ and the index at time $t$:
+\begin{definition}[Segmentation]
+A segmentation of a task is a function $F$ that maps every state-time tuple to an index $\{1,...,k\}$:
 \[
-i_{t+1} = \mathbf{M}(s_t, i_t)  
+F: \mathcal{X} \times \mathbb{Z}_+ \mapsto \{1,...,k\}
+\]
+
+A Markov segmentation function is a task segmentation where the segmentation index of time $t+1$ can be completely determined by the featurized state $x_t$ at time $t$ and the index $i_t$ at time $t$:
+\[
+i_{t+1} = \mathbf{M}(x_t, i_t)  
 \]
 \end{definition}
 
@@ -30,9 +35,9 @@ Suppose, we are given a general function that just identifies candidate segment 
 Such a function is weaker than a segmentation function since it does not globally label the detected segments.
 
 \begin{definition}[Transition Indicator Function]
-A transition indicator function $\mathbf{T}$ is a function that maps each kinematic state in a demonstration $d$ to $\{0,1\}$:
+A transition indicator function $\mathbf{T}$ is a function that maps each featurized state $x \in \mathcal{X}$ in a demonstration $d$ to $\{0,1\}$:
 \[
-\mathbf{T}: d \mapsto \{0,1\}
+\mathbf{T}: \mathcal{X} \mapsto \{0,1\}
 \]
 \end{definition}
 
@@ -41,7 +46,7 @@ The above definition naturally leads to a notion of transition states, the state
 \begin{definition}[Transition States]
 For a demonstration set $D$, Transition States are the set of state-time tuples where the indicator is 1:
 \[
-\Gamma = \{(x,t) \in D : \mathbf{T}(t) = 1\}
+\Gamma = \{(x,t) \in D : \mathbf{T}(x) = 1\}
 \]
 \end{definition}
 
@@ -49,6 +54,8 @@ We model the set $\Gamma$ as samples from an underlying distribution over the st
 \[
 \Gamma \sim f(x,t)
 \]
+
+
 Then, we can model the distribution as a GMM:
 \[
 f(x,t) = GMM(\pi,\{\mu_1,...,\mu_k\}, \{\Sigma_1,...,\Sigma_k\})
