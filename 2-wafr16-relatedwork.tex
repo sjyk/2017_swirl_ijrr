@@ -9,21 +9,21 @@ between states and actions.
 Behavioral cloning is an attractive LfD paradigm as it derives a controller by purely observing the supervisor.
 However, in practice, there are several reasons why refining this learned controller with physical rollouts is desirable.
 
-\vspace{0.5em}\noindent\textbf{Apprenticeship Learning: } Abbeel and Ng~\cite{ng2000algorithms, abbeel2004apprenticeship} argue that the reward function is often a more concise representation of task than a policy. Consider a motion planning problem where the reward function is simply a goal state, but the policy is a function that has to reason about obstacles and shortest paths. As such, a concise reward function is more likely to be robust to small perturbations in the task description. For example, in the motion planning problem, the goal state is invariant to changes in obstacles (assuming a feasible path still exists) and changes to the state-transition model. 
-The downside is that the reward function is not useful on its own, and ultimately a policy must be retrieved. In the most general case, an RL algorithm must be used to optimize for that reward function~\cite{abbeel2004apprenticeship}.
-It is well-established that RL problems often converge slowly in complex tasks when rewards are sparse and not ``shaped'' appropriately~\cite{DBLP:conf/icml/NgHR99, DBLP:conf/aaai/JudahFTG14}.
+\vspace{0.25em}\noindent\textbf{Apprenticeship Learning: } \cite{abbeel2004apprenticeship} argue that the reward function is often a more concise representation of task than a policy. Consider a motion planning problem where the reward function is simply a goal state, but the policy is a function that has to reason about obstacles and shortest paths. As such, a concise reward function is more likely to be robust to small perturbations in the task description. For example, in the motion planning problem, the goal state is invariant to changes in obstacles (assuming a feasible path still exists) and changes to the state-transition model. 
+The downside is that the reward function is not useful on its own, and ultimately a policy must be retrieved. In the most general case, an RL algorithm must be used to optimize for that reward function~\citep{abbeel2004apprenticeship}.
+It is well-established that RL problems often converge slowly in complex tasks when rewards are sparse and not ``shaped'' appropriately~\citep{DBLP:conf/icml/NgHR99, DBLP:conf/aaai/JudahFTG14}.
 Our work re-visits this two-phase algorithm in the context of sequential tasks and techniques to scale such an approach to longer time horizons.
-Related to \hirl, Kolter et al. studied  \emph{Hierarchical Apprenticeship Learning} to learn bipedal locomotion~\cite{DBLP:conf/nips/KolterAN07}, where the algorithm is provided with a hierarchy sub-tasks.
+Related to \hirl, Kolter et al. studied  \emph{Hierarchical Apprenticeship Learning} to learn bipedal locomotion~\citep{DBLP:conf/nips/KolterAN07}, where the algorithm is provided with a hierarchy sub-tasks.
 We explore automatically infering a sequential task structure from data.
 
-\vspace{0.5em}\noindent\textbf{Motion Primitives: } In parallel to the work on apprenticeship learning, the LfD and planning communities studied the problem of leveraging motion primitives, or libraries of temporally extended action sequences, to improve generalization. 
-Dynamic Motion Primitives construct new motions through a composition of dynamical building blocks ~\cite{ijspreet2002learning,pastor2009learning,manschitz2015learning}.
-Much of the work in motion primitives considered manually identified segments, but recently, Niekum et al. \cite{niekum2012learning} proposed learning the set of primitives from demonstrations using the Beta-Process Autoregressive Hidden Markov Model (BP-AR-HMM).
-Similarly, Calinon et al.~\cite{calinon2014skills} proposed the task-parametrized movement model with GMMs for automatic action segmentation.
+\vspace{0.25em}\noindent\textbf{Motion Primitives: } In parallel to the work on apprenticeship learning, the LfD and planning communities studied the problem of leveraging motion primitives, or libraries of temporally extended action sequences, to improve generalization. 
+Dynamic Motion Primitives construct new motions through a composition of dynamical building blocks ~\citep{ijspreet2002learning,pastor2009learning,manschitz2015learning}.
+Much of the work in motion primitives considered manually identified segments, but recently, Niekum et al. \citep{niekum2012learning} proposed learning the set of primitives from demonstrations using the Beta-Process Autoregressive Hidden Markov Model (BP-AR-HMM).
+Similarly, Calinon et al.~\citep{calinon2014skills} proposed the task-parametrized movement model with GMMs for automatic action segmentation.
 Both Niekum and Calinon considered the motion planning setting in which analytical planning methods are used to solve a task.
 To the best of our knowledge, \hirl is the first to consider segmentation in the IRL setting, where the dynamics can be stochastic.
 
-\vspace{0.5em}\noindent\textbf{Segmentation: } Trajectory segmentation is a well-studied area of research dating back to early biomechanics and robotics research.
+\vspace{0.25em}\noindent\textbf{Segmentation: } Trajectory segmentation is a well-studied area of research dating back to early biomechanics and robotics research.
 For example, \cite{viviani1985segmentation} explored using the ``two-thirds'' powerlaw coefficient to determine segment boundaries in handwriting.
 \cite{morasso1983three} showed that rhythmic 3d motions of a human arm could be modeled as piecewise linear.
 In a seminal paper, \cite{sternad1999segmentation} provided a formal framework for control-theoretic segmentation of trajectories.
@@ -31,11 +31,11 @@ In a seminal paper, \cite{sternad1999segmentation} provided a formal framework f
 Concurrently, temporal-segmentation was developing in the motion capture community~\citep{moeslund2001survey}.
 Recently, a number of Bayesian approaches have been proposed for the segmentation problem~\citep{asfour2006imitation,calinon2004stochastic,kruger2010learning, vakanski2012trajectory,tanwani2016learning}.
 One challenge is collecting enough data to employ these techniques and tuning the hyperparameters.
-In prior work, we observed that under the assumption that the task is sequential (same order of primitives in each demonstration) the inference can be modeled as a two-level clustering problem~\cite{krishnan2015tsc}.
+In prior work, we observed that under the assumption that the task is sequential (same order of primitives in each demonstration) the inference can be modeled as a two-level clustering problem~\citep{krishnan2015tsc}.
 This results in improved accuracy and robustness for a small number of demonstrations.
-Another relevant result is from Ranchod et al.~\cite{ranchod2015nonparametric}, who use an IRL model to define the primitives, in contrast to the problem of learning a policy after IRL.
+Another relevant result is from Ranchod et al.~\citep{ranchod2015nonparametric}, who use an IRL model to define the primitives, in contrast to the problem of learning a policy after IRL.
 
-\vspace{0.5em}\noindent\textbf{Hierarchical Reinforcement Learning: } 
+\vspace{0.25em}\noindent\textbf{Hierarchical Reinforcement Learning: } 
 The field of hierarchical reinforcement learning has a long history~\citep{parr98,suttonPS99,barto03} in AI and in the analysis of biological systems~\citep{botvinick08,botvinick2009hierarchically,solway2014optimal,zacksKEH11,whitenFBL06}.
 Early work in hierarchical control demonstrated the advantages of hierarchical structures by handcrafting hierarchical policies~\citep{brooks1986robust} and by learning them given various manual specifications: state abstractions~\citep{dayanH92,hengst02,kolterAN07,konidarisB07}, a set of waypoints~\citep{kaelbling93}, low-level skills~\citep{huberG97,baconP15,liaw17composing}, a set of finite-state meta-controllers~\citep{parrR97}, a set of subgoals~\citep{suttonPS99,dietterich00}, or intrinsic reward~\citep{kulkarni2016hierarchical}.
 The key abstraction used in hierarchical RL is the ``options'' framework, where sub-skills are represented by local policies, termination conditions, and initialization conditions.

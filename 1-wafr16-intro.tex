@@ -1,17 +1,17 @@
 \section{Introduction}
 An important problem in robot learning is defining a reward function that accurately reflects a robot's ability to perform a task.
-However, in many cases, the most straight-forward reward function is delayed, where the consequences of an action are only observed long after it is taken.
-Such reward functions are difficult to directly optimize with exploration-based policy search techniques like Reinforcement Learning (RL).
+However, in many cases, the most natural reward function is delayed, where the consequences of an action are only observed long after it is taken.
+Such reward functions are difficult to directly optimize with exploration-based techniques like Reinforcement Learning (RL).
 For example, in a multi-step assembly task, one might have classifier that only can determine if the full part is correctly assembled.
-The algorithm has to rely on random exploration to achieve the assembled state by chance at least once, before it can start to assign values to visiting states.
+In this problem, RL would have to rely on random exploration to achieve the assembled state by chance at least once, before it can learn a more efficient policy.
 
-One problem of interest in robotics is \emph{apprenticeship learning}~\cite{DBLP:conf/nips/KolterAN07, coates2008learning, abbeel2004apprenticeship}.
+One problem of interest is \emph{apprenticeship learning}~\citep{DBLP:conf/nips/KolterAN07, coates2008learning, abbeel2004apprenticeship}.
 In apprenticeship learning, a supervisor provides a small number of initial demonstrations, and there is a two-phase approach that first applies Inverse Reinforcement Learning (IRL) to infer the supervisor's implicit reward function, and then optimizes for this reward function using RL.
-This allows the learned policy to potentially exceed the performance of the supervisor with enough exploration and be robust to differences between the demonstration and execution dynamics~\cite{abbeel2004apprenticeship}, modeling errors~\cite{ross2011reduction}, and noise or inconsistency~\cite{krishnan2015tsc}. 
-During the IRL stage, one might infer a reward function that is delayed which affects the efficiency of the subsequent policy search.
+This allows the learned policy to potentially exceed the performance of the supervisor with enough exploration and be robust to differences between the demonstration and execution dynamics~\citep{abbeel2004apprenticeship}, modeling errors~\citep{ross2011reduction}, and noise or inconsistency. 
+However, during the IRL stage, one might infer a reward function that is delayed which affects the efficiency of the subsequent policy search.
 
-Addressing the problem of delayed rewards is crucial to scaling apprenticeship learning to tasks with longer time horizons.
-Several classical learning from demonstrations approaches use segmentation, where a task is partitioned into sub-sequences~\cite{argall2009survey}.
+Addressing the problem of delayed rewards in IRL is crucial to scaling apprenticeship learning to tasks with longer time horizons.
+Several classical learning from demonstrations approaches use segmentation, where a task is partitioned into sub-sequences~\citep{argall2009survey}.
 Segmentation facilitates learning localized control policies~\citep{murali2015learning, niekum2012learning, konidaris2011robot}, adaptation to unseen scenarios~\citep{ijspreet2002learning, ude2010task}, and demonstrator skill-assessment~\citep{reiley2010motion, gao2014jigsaws}.
 Often these segments are manually designed or derived from a dictionary of motion primitives, but recently there are several approaches for learning segments automatically by identifying locally similar structure in demonstration data~\citep{barbivc2004segmenting, chiappa2010movement,  alvarez2010switched,calinon2010learning, kruger2012imitation, niekum2012learning, wachter2015hierarchical, lee2015autonomous}.
 While prior work has considered segmentation to reduce the complexity of deterministic planning problems, this paper explores how segmentation can inform reward derivation in apprenticeship learning for sequential tasks.
@@ -24,18 +24,18 @@ The state space can represent spatial, kinematic, or sensory states (e.g., visua
 The discrete actions are not a fundamental restriction, but relaxing that constraint is deferred to future work.
 Finally, $\mathbf{R}_{seq}$ and $G$ can be used in an RL algorithm to find an optimal policy for a task.
 
-\hirl segments the demonstrations using a variant of a segmentation algorithm proposed in our prior work~\cite{krishnan2015tsc,murali2016}, called Transition State Clustering (TSC).
+\hirl segments the demonstrations using a variant of a segmentation algorithm proposed in our prior work~\citep{krishnan2015tsc,murali2016}, called Transition State Clustering (TSC).
 TSC identifies locally similar dynamical segments in a trajectory and fits a Gaussian Mixture Model to the end-points of the segments to learn a model to determine when and where a segment terminates.
 While our original motivation was to improve the robustness of kinematic segmentation algorithms by pruning sparse clusters, TSC can also be interpreted as inferring the subtask transition regions $G$.
 \hirl extends TSC by: (1) formalizing a class of Markov segmentation algorithms that could apply, and (2) combining TSC with a kernel embedding to handle certain types of non-linearities and discontinuities in the state-space.
-Once the segments are found, \hirl applies Maximum Entropy Inverse Reinforcement Learning~\cite{DBLP:conf/aaai/ZiebartMBD08} to each set of segments to find $\mathbf{R}_{seq}$.
+Once the segments are found, \hirl applies Maximum Entropy Inverse Reinforcement Learning~\citep{DBLP:conf/aaai/ZiebartMBD08} to each set of segments to find $\mathbf{R}_{seq}$.
 
 Learning a policy from $\mathbf{R}_{seq}$ and $G$ is nontrivial because solving $k$ independent problems neglects any shared structure in the value function during the policy learning phase (e.g., a common failure state).
 Jointly learning over all segments introduces a dependence on history, namely, any policy must complete step $i$ before step $i+1$.
 Learning a memory-dependent policy could lead to an exponential overhead of additional states. 
 \hirl exploits the fact that TSC is a Markov segmentation algorithm and shows that the problem can be posed as a proper MDP in a lifted state-space that includes an indicator variable of the highest-index $\{1,...,k\}$ transition region that has been reached so far.
 
-The basic model follows from a special case of Hierarchical Reinforcement Learning~\cite{suttonPS99}.
+The basic model follows from a special case of Hierarchical Reinforcement Learning~\citep{suttonPS99}.
 In hierarchical reinforcement learning, multi-step skills are composed of local policies called ``options''. Each option executes until a termination condition and a meta-policy selects the next option to execute.
 \hirl is an IRL framework for inferring termination conditions ($G$) and local reward functions that guide the agent to these termination states $\mathbf{R}_{seq}$, where the meta-policy is deterministic and sequential.
 
