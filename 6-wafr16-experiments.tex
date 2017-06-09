@@ -46,6 +46,7 @@ The learned reward functions and transition regions are used in the policy learn
  \caption{For a fixed number of demonstrations $5$, we vary the number of rollouts and measure the average reward at each rollout. (QL) denotes Q-learning, (SVM) denotes a baseline of behavioral cloning with a SVM policy representation, (IRL-E) denotes MaxEnt-IRL with estimated dynamics, (IRL-G) denotes MaxEnt-IRL with ground truth dynamics, (SWIRL-E) denotes SWIRL with local MaxEnt-IRL and estimated dynamics, (SWIRL-G) denotes SWIRL with local MaxEnt-IRL and ground truth dynamics, and (SWIRL-MF) denotes the model-free version of SWIRL. SWIRL achieves the same reward as QL with 15\% of the rollouts, and the same reward as IRL with 66\% of the rollouts. \label{exp:pp-fo1}}
 \end{figure}
 
+<<<<<<< HEAD
 \subsubsection{Fixed Demonstrations, Vary Rollouts}
 In the first experiment, we fix number of initial demonstrations $N=5$, and vary the number of rollouts (Figure \ref{exp:pp-fo1}).
 The basline line Q-Learning approach (QL) is very slow, because it relies on random exploration to achieve the goal at least once before it can start estimating the value of states and actions.
