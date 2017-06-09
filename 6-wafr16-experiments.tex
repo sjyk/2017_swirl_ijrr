@@ -2,10 +2,91 @@
 %\begin{document}
 
 \section{Experiments}\label{sec:exp}
-We evaluate \hirl with a series of standard RL benchmarks and in  physical experiments on the da Vinci surgical robot.
-All of the experimental scenarios followed a similar pattern: (1) start with an RL problem with a delayed reward, (2) generate $N$ demonstration trajectories with motion planning in simulated scenarios and kinethestic demonstration in the physical experiments, (3) apply \hirl, (4) evaluate the performance of the policy as a function of the $I$ iterations.
-For all convergence curves presented, we show the probability of task success as a function of the number of RL iterations.
-For convergence rate, we measure the Area Under Curve of the learning curve (i.e., cumulative expected reward over the learning epoch).
+We evaluate \hirl on two standard RL benchmarks and in deformable cutting and tensioning on the da Vinci surgical robot.
+
+\begin{figure}[t]
+\centering
+ \includegraphics[width=\columnwidth]{figures/domains.png}
+ \caption{(A) Simulated control task with a car with noisy non-holonomic dynamics. The car ($A_1$) is controlled by accelerating and turning in discrete increments. The task is to park the car between two obstacles. \label{domains}}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+ \includegraphics[width=\columnwidth]{exp/rc-car-segmentation.png}
+ \caption{(Left) the 5 demonstration trajectories for the parallel parking task, and (Right) the sub-goals learned by \hirl. There are two intermediate goals corresponding to positioning the car and orienting the car correctly before reversing. \label{exp:rcsegmentation}}
+\end{figure}
+
+\subsection{Fully Observed Parallel Parking}\label{exp:pp}
+We constructed a parallel parking scenario for a robot car with non-holonomic dynamics and two obstacles (Figure \ref{domains}a). 
+The car can accelerate or decelerate in discrete $\pm 0.1$ meters per second increments (and reverse), and change its heading by $5^\circ$ degree increments.
+The car's speed ($\|\dot{x}\|+\|\dot{y}\|$) and heading ($\theta$) are inputs to a bicycle steering model which computes the next state.
+The car observe its x position, y position, orientation, and speed in a global coordinate frame.
+The robot's dynamics are noisy and with probability 0.1 will randomly add or subtract $2.5^\circ$ degrees to the steering angle.
+If the robot parks between the obstacles, i.e., 0 speed within a $15^\circ$ tolerance and a positional tolerance of $5$ meters, the task is a success and the robot receives a reward of $1$. 
+If the robot collides with one of the obstacle or does not park in 200 timesteps the episode ends with a reward of $0$.
+
+We call this domain Parallel Parking with Full Observation (PP-FO). We consider the following approaches:
+
+\vspace{0.25em}\noindent \textbf{RL (Q-Learning): } The baseline approach is modeling the entire problem as an MDP with the sparse delayed reward. We apply Q-Learning to learn a policy for this problem with a radial basis function representation for the Q function with number of bases and bandwidth $k=5, \sigma=0.1$ respectively. The radial basis function hyper-parameters were tuned manually to achieve the fastest convergence in the experimental task. 
+
+\vspace{0.25em}\noindent \textbf{Behavioral Cloning (SVM): } We generated $N$ demonstrations using an RRT motion planner (assuming deterministic dynamics). The next baseline is to directly learn a policy from the generated plans using behavioral cloning. We use a L1 hinge-loss SVM with L2 regularization $\alpha=5e-3$ to predict the action from the state. The hyper-parameters were tuned manually using cross-validation by holding out trajectories.
+
+\vspace{0.25em}\noindent \textbf{Single-Step IRL (MaxEnt-IRL): } We generated $N$ demonstrations using an RRT motion planner (assuming deterministic dynamics). We use the collected demonstrations and infer a quadratic reward function using MaxEnt-IRL (both using estimated dynamics and ground truth dynamics). The learned reward function is optimized using Q-learning with a radial basis function representation with the same hyper-parameters as the RL approach. 
+
+\vspace{0.25em}\noindent \textbf{\hirl: } Finally, we apply \hirl to the $N$ demonstrations, learn segmentation, and quadratic rewards (Figure~\ref{exp:rcsegmentation}).
+We apply \hirl with a DP-GMM based segmentation step with no kernel transformation (as described in Section \ref{segm}).
+For the local IRL approach, we consider three approaches: MaxEnt with ground truth dynamics, MaxEnt with locally estimated dynamics, Model-Free. 
+The learned reward functions and transition regions are used in the policy learning phase with Q-learning with a radial basis function representation with the same hyper-parameters as the RL approach.
+
+\vspace{0.5em}
+
+\subsubsection{Fixed Demonstrations, Vary Rollouts}
+In the first experiment, we fix number of initial demonstrations $N=5$, and vary the number of rollouts.
+
+
+\subsubsection{Fixed Rollouts, Vary Demonstrations}
+Next, we fix the number of rollouts to $1250$, and vary the number of demonstration trajectories each approach observes.
+In the fully observed problem, compared to MaxEnt-IRL, the model-based \hirl converges to a policy with a 60\% success rate with about 3x fewer time-steps.
+The gains for the model-free version are more modest with a 50\% reduction.
+The supervised policy learning approach achieves a success rate of 47\% and the baseline RL approach achieves a success rate of 36\% after 250000 time-steps.
+
+The baseline Q-Learning approach directly tries to learn a sequence of actions to minimize the quadratic cost around the target state. 
+This leads to a lot of exploration since the robot must first make ``negative'' progress (pulling forward). 
+\hirl improves convergence since it structures the exploration through the segmentation.
+The local reward functions are better shaped to guide the car towards its short term goal.
+This focuses the exploration on solving the short term problem first.
+MaxEnt-IRL mitigates some of the problems since it rewards states based on their estimated cost-to-go, but as the time-horizon increases the estimates of this become nosier--leading to worse performance (see technical report for a characterization~\cite{krishnan2016hirl}).
+
+
+\subsubsection{Vary Task Parameters}
+Finally, we explore how well the constructed rewards transfer if the dynamics are perturbed in the fully observed setting.
+We expect MaxEnt-IRL to transfer well because it learns a delayed reward, which tends to encode success conditions and not task-specific details.
+After constructing the rewards, we randomly perturbed the system dynamics by introducing a bias towards turning left.
+We find that the model-based \hirl technique transfers to this domain comparably to MaxEnt-IRL until the task is so different that the sub-goals learned with \hirl are no longer informative.
+The model-free \hirl algorithm converges more slowly; requiring 20\% more time-steps to converge to the same success rate. 
+
+
+
+\subsection{Partially Observed Parallel Parking}
+Next, we made the  Parallel Parking domain a little harder. We hid the velocity state from the robot, so the robot only sees $(x,y,\theta)$. As before, if the robot collides with one of the obstacle or does not park in 200 timesteps the episode ends.
+We call this domain Parallel Parking with Partial Observation (PP-PO).
+
+As before, we generated 5 demonstrations using an RRT motion planner (assuming deterministic dynamics) and applied \hirl to learn the segments.
+Figure \ref{exp:rcsegmentation} illustrates the demonstrations and the learned segments. 
+
+
+In the partial observation problem (PP-PO), there is no longer a stationary policy that can achieve the reward.
+The techniques that model this problem with a single MDP all fail to converge.
+The learned segments in \hirl help disambiguate dependence on history.
+After 250000 time-steps, the policy learned with model-based \hirl has a 70\% success rate in comparison to a <10\% success rate for the baseline RL, MaxEnt-IRL, and 0\% for the SVM.
+
+
+
+
+
+
+
+
 
 \begin{figure}[t]
 \centering
@@ -105,49 +186,10 @@ This suggests an interesting tradeoff where more segments can serve to more prec
 \subsection{Simulated Control Domains}
 Next, we describe \hirl on simulated control domains. These illustrate examples with continuous state-spaces.
 
-\subsubsection{Parallel Parking}\label{exp:pp}
-We constructed a parallel parking scenario for a robot with non-holonomic dynamics and two obstacles. The robot can control its speed ($\|\dot{x}\|+\|\dot{y}\|$) and heading ($\theta$), and observe its x position, y position, orientation, and speed in a global coordinate frame.
-If the robot parks between the obstacles, i.e., 0 velocity within a $15^\circ$ tolerance, the task is a success and the robot receives a reward of $1$. 
-The robot's dynamics are noisy and with probability 0.1 will randomly add or subtract $5^\circ$ degrees from the steering angle.
-If the robot collides with one of the obstacle or does not park in 200 timesteps the episode ends. 
-The baseline approach is modeling the entire problem as an MDP with a quadratic reward function at the target state (where the robot parks).
-For comparison, we use this reward function for Q-Learning and infer a quadratic reward function using MaxEnt-IRL.
-We call this domain Parallel Parking with Full Observation (PP-FO) (see Figure~\ref{exp:rcsegmentation}).
-
-Next, we made the  Parallel Parking domain a little harder. We hid the velocity state from the robot, so the robot only sees $(x,y,\theta)$. As before, if the robot collides with one of the obstacle or does not park in 200 timesteps the episode ends.
-We call this domain Parallel Parking with Partial Observation (PP-PO).
-
-We generated 5 demonstrations using an RRT motion planner (assuming deterministic dynamics) and applied \hirl to learn the segments.
-Figure \ref{exp:rcsegmentation} illustrates the demonstrations and the learned segments. There are two intermediate goals corresponding to positioning the car and orienting the car correctly before reversing.
-
-In the fully observed problem, compared to MaxEnt-IRL, the model-based \hirl converges to a policy with a 60\% success rate with about 3x fewer time-steps.
-The gains for the model-free version are more modest with a 50\% reduction.
-The supervised policy learning approach achieves a success rate of 47\% and the baseline RL approach achieves a success rate of 36\% after 250000 time-steps.
-
-The baseline Q-Learning approach directly tries to learn a sequence of actions to minimize the quadratic cost around the target state. 
-This leads to a lot of exploration since the robot must first make ``negative'' progress (pulling forward). 
-\hirl improves convergence since it structures the exploration through the segmentation.
-The local reward functions are better shaped to guide the car towards its short term goal.
-This focuses the exploration on solving the short term problem first.
-MaxEnt-IRL mitigates some of the problems since it rewards states based on their estimated cost-to-go, but as the time-horizon increases the estimates of this become nosier--leading to worse performance (see technical report for a characterization~\cite{krishnan2016hirl}).
-
-In the partial observation problem (PP-PO), there is no longer a stationary policy that can achieve the reward.
-The techniques that model this problem with a single MDP all fail to converge.
-The learned segments in \hirl help disambiguate dependence on history.
-After 250000 time-steps, the policy learned with model-based \hirl has a 70\% success rate in comparison to a <10\% success rate for the baseline RL, MaxEnt-IRL, and 0\% for the SVM.
-
-Finally, we explore how well the constructed rewards transfer if the dynamics are perturbed in the fully observed setting.
-We expect MaxEnt-IRL to transfer well because it learns a delayed reward, which tends to encode success conditions and not task-specific details.
-After constructing the rewards, we randomly perturbed the system dynamics by introducing a bias towards turning left.
-We find that the model-based \hirl technique transfers to this domain comparably to MaxEnt-IRL until the task is so different that the sub-goals learned with \hirl are no longer informative.
-The model-free \hirl algorithm converges more slowly; requiring 20\% more time-steps to converge to the same success rate. 
 
 
-\begin{figure}[t]
-\centering
- \includegraphics[width=\columnwidth]{exp/rc-car-segmentation.png}
- \caption{This plot illustrates (left) the 5 demonstration trajectories for the parallel parking task, and (right) the sub-goals learned by \hirl. \label{exp:rcsegmentation}}
-\end{figure}
+
+
 
 
 \begin{figure*}[t]

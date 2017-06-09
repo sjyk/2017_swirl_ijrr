@@ -7,7 +7,7 @@ The Algorithm is summarized in below in Phase\,\ref{alg:tsh2}.
 
 
 \subsection{Primer on Maximum Entropy Inverse Reinforcement Learning}
-To fit the local rewards, we apply Maximum Entropy Inverse Reinforcement Learning (MaxEnt-IRL)~\cite{DBLP:conf/aaai/ZiebartMBD08}. 
+To fit the local rewards, we apply Maximum Entropy Inverse Reinforcement Learning (MaxEnt-IRL)~\citep{DBLP:conf/aaai/ZiebartMBD08}. 
 The goal of MaxEnt-IRL is to find a reward function such that an optimal policy w.r.t that reward function is close to the
 expert demonstration.
 In the MaxEnt-IRL model, ``close'' is defined as matching the first moment of the expert feature distribution:
@@ -61,7 +61,7 @@ For each, $(s,a,s')$ observation in the segment, we increment (+1) the appropria
 At the end, we normalize the elements to sum to one across the set of actions.
 An additional optimization could be to add smoothing to this estimate (i.e., initialize the matrix with some non-zero constant value), we found that this was not necessary on the sparse domains in our experiments.
 The result is an estimate for the $P(s' \mid s, a)$.
-Given this estimate, $\gamma_{\theta}$ can be efficiently calculated with the forward-backward technique described in~\cite{DBLP:conf/aaai/ZiebartMBD08}.
+Given this estimate, $\gamma_{\theta}$ can be efficiently calculated with the forward-backward technique described in~\citep{DBLP:conf/aaai/ZiebartMBD08}.
 
 \subsubsection{Linear}
 The discrete model is difficult to scale to continuous state-spaces.
@@ -71,7 +71,7 @@ We can fit local linear models to each of the segments discovered in the previou
 \[
 A_j = \arg\min_{A} \sum_{i=1}^N \sum_{\text{seg j start}}^{\text{seg j end}} \|A x^{(i)}_{t} - x^{(i)}_{t+1}\|
 \]
-With $A_j$ known, $\gamma_{\theta}$ can be analytically solved with techniques proposed in~\cite{ziebart2012probabilistic}.
+With $A_j$ known, $\gamma_{\theta}$ can be analytically solved with techniques proposed in~\citep{ziebart2012probabilistic}.
 \hirl applies MaxEnt-IRL to the sub-sequences of demonstrations between 0 and $\rho_1$, and then from $\rho_1$ to $\rho_2$ and so on.
 The result is an estimated local reward function $R_{i}$ modeled as a linear function of states that is associated with each $\rho_i$.
 

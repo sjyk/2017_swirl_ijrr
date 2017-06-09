@@ -1,13 +1,6 @@
 %\documentclass[0-main.tex]{subfiles}
 %\begin{document}
 \section{Related Work and Background}
-We briefly overview some of the relevant Learning from Demonstration and Reinforcement Learning literature.
-
-The seminal work by Michie~\cite{michie1996behavioural} described the still popular Behavioral cloning model.
-In this model, state-action tuples are observed from a demonstration and a function approximator is used to learn the mapping
-between states and actions.
-Behavioral cloning is an attractive LfD paradigm as it derives a controller by purely observing the supervisor.
-However, in practice, there are several reasons why refining this learned controller with physical rollouts is desirable.
 
 \vspace{0.25em}\noindent\textbf{Apprenticeship Learning: } \cite{abbeel2004apprenticeship} argue that the reward function is often a more concise representation of task than a policy. Consider a motion planning problem where the reward function is simply a goal state, but the policy is a function that has to reason about obstacles and shortest paths. As such, a concise reward function is more likely to be robust to small perturbations in the task description. For example, in the motion planning problem, the goal state is invariant to changes in obstacles (assuming a feasible path still exists) and changes to the state-transition model. 
 The downside is that the reward function is not useful on its own, and ultimately a policy must be retrieved. In the most general case, an RL algorithm must be used to optimize for that reward function~\citep{abbeel2004apprenticeship}.
